@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name "XT60-M")(type "KiCad")(uri "${KIPRJMOD}/Imported Parts/XT60-M")(options "")(descr ""))
+  (lib (name "LT3033")(type "KiCad")(uri "${KIPRJMOD}/Imported Parts/LT3033")(options "")(descr ""))
+)
