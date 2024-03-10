@@ -44,7 +44,7 @@ Gmin = 0
 Gmin stepping succeeded in finding the operating point.
 
 
-Date: Sun Feb 18 22:30:11 2024
+Date: Fri Mar  8 16:16:56 2024
 Total elapsed time: 0.085 seconds.
 
 tnom = 27
@@ -58,7 +58,7 @@ rejected = 0
 matrix size = 23
 fillins = 5
 solver = Normal
-Avg thread counts: 4.7/0.0/11.1/4.7
-Matrix Compiler1:      86 opcodes  0.3/0.3/[0.2]
-Matrix Compiler2: 2.06 KB object code size  0.3/0.5/[0.2]
+Avg thread counts: 4.7/0.0/11.2/4.7
+Matrix Compiler1:      86 opcodes  0.2/0.4/[0.2]
+Matrix Compiler2: 2.06 KB object code size  0.5/0.5/[0.2]
 
