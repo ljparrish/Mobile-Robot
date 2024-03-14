@@ -116,7 +116,7 @@ sgtitle("State Variables");
 
 
 figure;
-Ylabels = {'Velocity [m/s]','\omega [rad/s]'};
+Ylabels = {'\omega_{L} [rad/s]','\omega_{R} [rad/s]'};
 for p = 1:nu
     subplot(nu,1,p);
     plot(t,uHistory(p,:));
