@@ -27,9 +27,12 @@ MPCController.Model.NumberOfParameters = 1;
 % Set the system output model for the unicycle robot
 MPCController.Model.OutputFcn = "UnicycleOutput";
 
+% Provide the system Jacobian
+%MPCController.Jacobian.OutputFcn = @(x,u,Ts) [1 0 -u(1)*sin(x(3)); 0 1 u(1)*sin(x(3)); 0 0 1];
+
 % Define MPC Cost
 MPCController.Weights.OutputVariables = [10 10 0]; % State Error Cost
-MPCController.Weights.ManipulatedVariables = [1 1]; % Input Cost
+MPCController.Weights.ManipulatedVariables = [0.1 0.1]; % Input Cost
 MPCController.Weights.ManipulatedVariablesRate = [0.1 0.1]; % Input Rate Cost
 
 % Define Constraint on State Variables
@@ -40,21 +43,21 @@ MPCController.OV(2).Min = -10;
 MPCController.OV(2).Max = 10;
 
 % Define Constraints on Actuator Inputs
-MPCController.MV(1).Min = -1.0;
-MPCController.MV(1).Max = 2.0;
+MPCController.MV(1).Min = -20;
+MPCController.MV(1).Max = 40;
 
-MPCController.MV(2).Min = -1.0;
-MPCController.MV(2).Max = 1.0;
+MPCController.MV(2).Min = -20;
+MPCController.MV(2).Max = 40;
 
 % Define Constraints on Actuator Input Rate of Change
-MPCController.MV(1).RateMin = -0.1;
-MPCController.MV(1).RateMax = 0.1;
+MPCController.MV(1).RateMin = -5;
+MPCController.MV(1).RateMax = 5;
 
-MPCController.MV(2).RateMin = -0.3;
-MPCController.MV(2).RateMax = 0.3;
+MPCController.MV(2).RateMin = -5;
+MPCController.MV(2).RateMax = 5;
 
 %% MPC Controller Validation
-x0 = [0; -4; 0];
+x0 = [0; 0; 0];
 u0 = [0; 0];
 validateFcns(MPCController,x0,u0,[],{Ts});
 
@@ -62,8 +65,8 @@ validateFcns(MPCController,x0,u0,[],{Ts});
 tF = 60;
 t = 0:Ts:tF;
 xref = zeros(nx,length(t));
-xref(1,:) = 4*sin(t/5);
-xref(2,:) = 4*sin(t/5).*(1-cos(t/5));
+xref(1,:) = 4*sin(t/7).*(1+cos(t/7));
+xref(2,:) = 4*sin(t/7).*(1-cos(t/7));
 xref = xref';
 
 %% Simulate MPC Controller
@@ -77,6 +80,7 @@ uHistory = u;
 trajectorylookahead = 5;
 xref = [xref; xref(end,:); xref(end,:); xref(end,:); xref(end,:); xref(end,:)];
 
+tic;
 for k = 1:length(t)
     % Update state reference
     ref = xref(k:k+trajectorylookahead,:);
@@ -91,6 +95,8 @@ for k = 1:length(t)
     xHistory = [xHistory x];
     uHistory = [uHistory u];
 end
+disp("Average MPC Iteration Time (ms): ");
+disp(toc/k * 1000);
 xHistory(:,1) = [];
 uHistory(:,1) = [];
 
@@ -121,6 +127,7 @@ sgtitle("Actuator Inputs");
 
 figure;
 hold on;
+grid on;
 plot(xHistory(1,:),xHistory(2,:));
 plot(xref(1:length(t),1),xref(1:length(t),2),'r--');
 xlabel('x [m]');
