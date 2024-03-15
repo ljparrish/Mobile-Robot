@@ -11,7 +11,7 @@ goalPosition = [8 8];
 % maximum number of nodes. Specify the maximum distance between the two
 % connected notes
 
-% Increasing this number decreases noise in our trajectory planning but will increase computation time
+% Increasing this number decreases noise in our trajectory planning computation time
 numnodes = 2000;
 planner = mobileRobotPRM(map, numnodes);
 
