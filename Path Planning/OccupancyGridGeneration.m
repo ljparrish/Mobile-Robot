@@ -19,8 +19,25 @@ setOccupancy(map, [1,1], walls, "grid")
 
 %Inflate the thickness of our occupied spaces to give more room for robot
 %to navigate around obstacles
-inflate(map, 0.5)
+inflate(map, 0.1)
 figure
 show(map)
 
 save occupancygrid.mat map
+
+%%  Create occupancy map with cost values
+costValue = zeros(10,10);
+costValue(1,:) = 1; % Top wall
+costValue(end,:)= 1; % Bottom wall
+costValue(:,1) = 1; % Left wall
+costValue(:,end) = 1; % Right wall
+costValue(1:3,4) = 1; % Left division
+costValue(2:end, 4)= 1; % Middle division
+costValue(1:3,6) = 1; %Right Division
+
+costValuesMap = binaryOccupancyMap(costValue, 3);
+show(map)
+
+
+
+save costvalueoccupancygrid.mat map
