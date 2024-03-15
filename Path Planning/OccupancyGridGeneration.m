@@ -10,15 +10,16 @@ walls(:,1) = 1; % Left wall
 walls(:,end) = 1; % Right wall
 walls(1:50,15) = 1; % Left division
 walls(25:end, 40)= 1; % Middle division
-%walls(1:30,35) = 1; %Right Division
+walls(1:30,60) = 1; %Right Division
 
 % Set occupancy of world locations and show map
 
 
 setOccupancy(map, [1,1], walls, "grid")
 
-%Inflate the thickness of our occupied spaces
-inflate(map, 0.15)
+%Inflate the thickness of our occupied spaces to give more room for robot
+%to navigate around obstacles
+inflate(map, 0.5)
 figure
 show(map)
 

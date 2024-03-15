@@ -19,20 +19,27 @@ planner.ConnectionDistance = 1;
 %in between
 waypoints = findpath(planner,startPosition, goalPosition);
 
-disp(waypoints)
+waypoints = transpose(waypoints);
+%show(map)
+%hold on 
+%plot(waypoints(:,1),waypoints(:,2))
 
-%% Trajectory Generation
-% Robot height from base.
-robotheight = 0.12;
-% Number of waypoints
-numWaypoints = size(waypoints,1);
-%Robot arrival time at first waypoint
-firstInTime = 0;
-% Robot arrival time at last waypoint
-lastInTime = firstInTime + (numWaypoints-1);
-% Generate waypoint trajectory with waypoints from planned path
-traj = waypointTrajectory(SampleRate=10,...
-    TimeOfArrival=firstInTime:lastInTime,...
-    Waypoints=[waypoints, robotheight*ones(numWaypoints,1)],...
-    ReferenceFrame="ENU");
+%% B-Spline Curve Generation
+
+timePoints = [0 50];
+timeVector = 0:0.01:50;
+
+[q, qd, qdd, pp] = bsplinepolytraj(waypoints,timePoints,timeVector);
+
+figure
+show(map)
+hold on
+plot(waypoints(1,:),waypoints(2,:),'xb-')
+hold all
+plot(q(1,:), q(2,:))
+xlabel('X')
+ylabel('Y')
+hold off
+
+save BezierTrajectory.mat q
 
