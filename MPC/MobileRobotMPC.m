@@ -57,17 +57,26 @@ MPCController.MV(2).RateMin = -5;
 MPCController.MV(2).RateMax = 5;
 
 %% MPC Controller Validation
-x0 = [0; 0; 0];
+x0 = [1; 1; pi/2];
 u0 = [0; 0];
 validateFcns(MPCController,x0,u0,[],{Ts});
 
-%% Create Reference Trajectory
-tF = 60;
-t = 0:Ts:tF;
-xref = zeros(nx,length(t));
-xref(1,:) = 4*sin(t/7).*(1+cos(t/7));
-xref(2,:) = 4*sin(t/7).*(1-cos(t/7));
-xref = xref';
+%% Create or Load Reference Trajectory
+try
+    load("BezierTrajectory.mat")
+    q = q(:,1:40:end); % Downsample q
+    xref = zeros(nx,size(q,2));
+    xref(1,:) = q(1,:);
+    xref(2,:) = q(2,:);
+    t = 1:Ts:Ts*size(q,2);
+catch
+    tF = 60;
+    t = 0:Ts:tF;
+    xref = zeros(nx,length(t));
+    xref(1,:) = 4*sin(t/7).*(1+cos(t/7));
+    xref(2,:) = 4*sin(t/7).*(1-cos(t/7));
+end
+    xref = xref';
 
 %% Simulate MPC Controller
 
@@ -119,7 +128,7 @@ figure;
 Ylabels = {'\omega_{L} [rad/s]','\omega_{R} [rad/s]'};
 for p = 1:nu
     subplot(nu,1,p);
-    plot(t,uHistory(p,:));
+    stairs(t,uHistory(p,:));
     xlabel('Time [s]');
     ylabel(Ylabels(p));
 end
