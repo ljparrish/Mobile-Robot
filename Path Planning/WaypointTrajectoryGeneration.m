@@ -5,7 +5,23 @@ load occupancygrid.mat map
 
 %set start and end positions
 startPosition = [1 1];
-goalPosition = [8 8];
+
+show(map)
+pause(1);
+h=msgbox('Please Select the Target using the Left Mouse button');
+uiwait(h,5);
+if ishandle(h) == 1
+    delete(h);
+end
+xlabel('Please Select the Target using the Left Mouse button','Color','black');
+but=0;
+while (but ~= 1) %Repeat until the Left button is not clicked
+    [xval,yval,but]=ginput(1);
+end
+xval=floor(xval);
+yval=floor(yval);
+goalPosition = [xval, yval];
+%goalPosition = [8 8];
 
 %Create a mobileRobotPRM object with a binary occupancy map and specify the
 % maximum number of nodes. Specify the maximum distance between the two
@@ -32,7 +48,7 @@ disp(waypoints)
 %% B-Spline Curve Generation
 
 timePoints = [0 50];
-timeVector = 0:0.01:50;
+timeVector = 0:0.1:50;
 
 [q, qd, qdd, pp] = bsplinepolytraj(waypoints,timePoints,timeVector);
 
@@ -40,7 +56,7 @@ figure
 show(map)
 hold on
 plot(waypoints(1,:),waypoints(2,:),'xb-')
-hold all
+hold on
 plot(q(1,:), q(2,:))
 xlabel('X')
 ylabel('Y')
