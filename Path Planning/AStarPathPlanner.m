@@ -1,3 +1,4 @@
+close all; clc; clear;
 %% A* Path Planning
 %Load occupancy grid
 load costvalueoccupancygrid.mat map
@@ -19,18 +20,36 @@ sv.Map = map;
 % motion primitive length. Getting rid of either of those drastically 
 % increases computation time
 planner = plannerHybridAStar(sv, ...
-                             MinTurningRadius=0.75, ...
-                             MotionPrimitiveLength=0.5);
+                             MinTurningRadius=0.15, ...
+                             MotionPrimitiveLength=0.2);
 
 % Define start and goal poses for the vehicle as [x, y, theta] vectors. x 
 % and y specify the position in meters, and theta specifies the orientation
 % angle in radians.
 
 startPose = [2 1 pi/2]; % [meters, meters, radians]
-goalPose = [8 8 2*pi];
+show(map)
+pause(1);
+h=msgbox('Please Select the Target using the Left Mouse button');
+uiwait(h,5);
+if ishandle(h) == 1
+    delete(h);
+end
+xlabel('Please Select the Target using the Left Mouse button','Color','black');
+but=0;
+while (but ~= 1) %Repeat until the Left button is not clicked
+    [xval,yval,but]=ginput(1);
+end
+xval=floor(xval);
+yval=floor(yval);
+goalOrientation = -pi/2;
+goalPose = [xval yval goalOrientation];
+%goalPose = [8 8 2*pi];
 
 %Plan a path from the start pose to the goal pose.
-refpath = plan(planner,startPose,goalPose,SearchMode='exhaustive');     
+tic;
+refpath = plan(planner,startPose,goalPose,SearchMode='greedy');     
+disp(toc);
 
 % Extract the path poses from the path object
 path = refpath.States;
