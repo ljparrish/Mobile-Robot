@@ -4,7 +4,7 @@ close all; clc; clear;
 load occupancygrid.mat map
 
 %set start and end positions
-startPosition = [2 2];
+startPosition = [1 1];
 
 % Create A* planner object
 planner = plannerAStarGrid(map);
