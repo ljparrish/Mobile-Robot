@@ -28,7 +28,7 @@ MPCController.Model.NumberOfParameters = 1;
 MPCController.Model.OutputFcn = "UnicycleOutput";
 
 % Provide the system Jacobian
-%MPCController.Jacobian.OutputFcn = @(x,u,Ts) [1 0 -u(1)*sin(x(3)); 0 1 u(1)*sin(x(3)); 0 0 1];
+% MPCController.Jacobian.OutputFcn = @(x,u,Ts) [1 0 -u(1)*sin(x(3)); 0 1 u(1)*sin(x(3)); 0 0 1];
 
 % Define MPC Cost
 MPCController.Weights.OutputVariables = [10 10 0]; % State Error Cost
@@ -89,13 +89,15 @@ uHistory = u;
 trajectorylookahead = 5;
 xref = [xref; xref(end,:); xref(end,:); xref(end,:); xref(end,:); xref(end,:)];
 
+[coreData, onlineData] = getCodeGenerationData(MPCController, x0, u0, {Ts});
+
 tic;
 for k = 1:length(t)
     % Update state reference
-    ref = xref(k:k+trajectorylookahead,:);
+    onlineData.ref = xref(k:k+trajectorylookahead,:);
 
     % Compute MPC
-    u = nlmpcmove(MPCController,x,u,ref,[],options);
+    [u, onlineData] = nlmpcmoveCodeGeneration(coreData, x, u, onlineData);
 
     % Apply optimal inputs and simulate next timestep
     x = UnicycleDiscrete(x,u,Ts);
@@ -104,6 +106,18 @@ for k = 1:length(t)
     xHistory = [xHistory x];
     uHistory = [uHistory u];
 end
+
+%% Codegen Block
+codeGenEnabled = 0;
+if(codeGenEnabled)
+    func = 'nlmpcmoveCodeGeneration';
+    funcOutput = 'nlmpcmoveMEX';
+    Cfg = coder.config("lib");
+    Cfg.TargetLang = 'C';
+    Cfg.DynamicMemoryAllocation = 'off';
+    codegen('-config',Cfg,func,'-o',funcOutput,'-args',{coder.Constant(coreData),x,u,onlineData});
+end
+
 disp("Average MPC Iteration Time (ms): ");
 disp(toc/k * 1000);
 xHistory(:,1) = [];
