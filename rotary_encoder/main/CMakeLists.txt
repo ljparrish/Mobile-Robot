@@ -1,2 +1,2 @@
-idf_component_register(SRCS "rotary_encoder_example_main.c"
+idf_component_register(SRCS "two_wheels_encoder_reading.c"
                        INCLUDE_DIRS ".")

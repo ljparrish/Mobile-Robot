@@ -15,8 +15,8 @@
 
 static const char *TAG = "example";
 
-#define EXAMPLE_PCNT_HIGH_LIMIT 100
-#define EXAMPLE_PCNT_LOW_LIMIT  -100
+#define EXAMPLE_PCNT_HIGH_LIMIT 10000
+#define EXAMPLE_PCNT_LOW_LIMIT  -10000
 
 #define EXAMPLE_EC11_GPIO_A 16
 #define EXAMPLE_EC11_GPIO_B 15
@@ -37,6 +37,8 @@ void app_main(void)
         .high_limit = EXAMPLE_PCNT_HIGH_LIMIT,
         .low_limit = EXAMPLE_PCNT_LOW_LIMIT,
     };
+
+
     pcnt_unit_handle_t pcnt_unit = NULL;
     ESP_ERROR_CHECK(pcnt_new_unit(&unit_config, &pcnt_unit));
 
