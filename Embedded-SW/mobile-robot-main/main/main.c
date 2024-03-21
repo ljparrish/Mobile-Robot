@@ -7,6 +7,7 @@
 
 // Include source files for Mobile Robot here!
 #include "led_blink.c"
+#include "motor_control.c"
 
 // Write RTOS Callback functions here!
 
@@ -48,4 +49,5 @@ void app_main(void)
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
     xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
+    xTaskCreate(vMotor_Ramp, "Motor Control", 4096, NULL, 1, NULL);
 }
