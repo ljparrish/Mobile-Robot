@@ -9,7 +9,7 @@
 #include "led_blink.c"
 #include "motor_control.c"
 
-// Write RTOS Callback functions here!
+// Write RTOS Callback functions here! (The RTOS task can also be defined in your .c file)
 
 // RTOS Task #1 - Blink LED
 void vLed_blink_task()

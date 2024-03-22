@@ -1,11 +1,3 @@
-/* Blink Example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -15,11 +7,8 @@
 #include "sdkconfig.h"
 #include "include/mobile_robot_pins.h"
 
-static const char *TAG = "LED";
+static const char *LED_TAG = "LED";
 
-/* Use project configuration menu (idf.py menuconfig) to choose the GPIO to blink,
-   or you can edit the following line and set a number here.
-*/
 #define BLINK_GPIO NEOPIXEL_ADDRESS
 
 static uint8_t s_led_state = 0;
@@ -41,7 +30,7 @@ static void blink_led()
 
 static void configure_led()
 {
-    ESP_LOGI(TAG, "Example configured to blink addressable LED!");
+    ESP_LOGI(LED_TAG, "Example configured to blink addressable LED!");
     /* LED strip initialization with the GPIO and pixels number*/
     gpio_reset_pin(NEOPIXEL_POWER);
     gpio_set_direction(NEOPIXEL_POWER, GPIO_MODE_OUTPUT);
