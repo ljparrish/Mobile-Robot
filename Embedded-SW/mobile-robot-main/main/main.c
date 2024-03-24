@@ -19,7 +19,7 @@ void vLed_blink_task()
     while (1)
     {
         blink_led();                        // Blink the LED
-        ESP_LOGI(TAG, "Blinked the LED!");
+        ESP_LOGI(LED_TAG, "Blinked the LED!");
         s_led_state = !s_led_state;
         vTaskDelay(pdMS_TO_TICKS(200));     // Block the task for 200 ms
     }
