@@ -4,7 +4,7 @@
     "idf.openOcdConfigs": [
         "board/esp32s3-builtin.cfg"
     ],
-    "idf.portWin": "COM13",
+    "idf.portWin": "COM7",
     "files.associations": {
         "led_strip.h": "c",
         "task.h": "c",
