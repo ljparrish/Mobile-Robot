@@ -73,8 +73,8 @@ catch
     tF = 60;
     t = 0:Ts:tF;
     xref = zeros(nx,length(t));
-    xref(1,:) = 4*sin(t/7).*(1+cos(t/7));
-    xref(2,:) = 4*sin(t/7).*(1-cos(t/7));
+    %xref(1,:) = 4*sin(t/7).*(1+cos(t/7));
+    %xref(2,:) = 4*sin(t/7).*(1-cos(t/7));
 end
     xref = xref';
 
