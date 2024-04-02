@@ -99,8 +99,8 @@ void vMotor_PID_Control()
     int left_motor_pulse_cnt = 0;
 
     // Initialize Motor Setpoints
-    int left_motor_setpoint = 3;
-    int right_motor_setpoint = 3;
+    int left_motor_setpoint = 30;
+    int right_motor_setpoint = 30;
 
     while (1)
     {
