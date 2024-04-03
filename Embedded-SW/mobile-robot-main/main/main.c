@@ -9,6 +9,7 @@
 // Include source files for Mobile Robot here!
 #include "led_blink.c"
 #include "motor_control.c"
+#include "esp_now.c"
 
 // Setup any Queues here!
 static QueueHandle_t right_encoder_queue;
@@ -142,6 +143,57 @@ void vMotor_PID_Control()
     
 }
 
+// RTOS Task #5 - ESPNOW
+void vESP_NOW()
+{
+    // Initialize NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK( nvs_flash_erase() );
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK( ret );
+
+    // Run the wifi init
+    wifi_init();
+
+    // Register Callback functions
+    ESP_ERROR_CHECK(esp_now_init());
+    esp_now_register_recv_cb(data_recieve_cb);
+    esp_now_register_send_cb(data_send_cb);
+
+    // Setup peer info type and register
+    memset(&dongle_info, 0, sizeof(dongle_info));
+    memcpy(dongle_info.peer_addr, s_usb_dongle_address, 6);
+    dongle_info.encrypt = false;
+    dongle_info.channel = 0;
+
+    // Init loop
+    int retry_counter = 0;
+    int max_retries = 5;
+    while(esp_now_add_peer(&dongle_info) != ESP_OK)
+    {
+        if (retry_counter > max_retries)
+        {
+            ESP_LOGE(ESP_NOW_TAG,"Maximum peer add retries exceeded");
+            while (1);
+        }
+        ESP_LOGW(ESP_NOW_TAG,"ESP NOW Failed to add peer! Retrying . . .");
+        vTaskDelay(pdMS_TO_TICKS(5000));
+        retry_counter++;
+    }
+
+    float counter = 0;
+    while (1)
+    {
+        memcpy(&state_data.x_position, &counter, sizeof(counter));
+        esp_now_send(s_usb_dongle_address, (u_int8_t * )&state_data, sizeof(state_data));
+        counter++;
+        vTaskDelay(pdMS_TO_TICKS(ESP_NOW_RATE));
+    }
+     
+}
+
 // Main function entry point here:
 void app_main(void)
 {
@@ -153,7 +205,7 @@ void app_main(void)
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
     xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
-    //xTaskCreate(vMotor_Ramp, "Motor Control", 4096, NULL, 1, NULL);
-    xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 1, NULL);
-    xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 1, NULL);
+    //xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 1, NULL);
+    //xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 1, NULL);
+    xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
 }
