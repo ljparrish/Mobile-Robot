@@ -64,7 +64,7 @@ validateFcns(MPCController,x0,u0,[],{Ts});
 %% Create or Load Reference Trajectory
 try
     load("AStarTrajecotory.mat")
-    %q = q(:,1:40:end); % Downsample q
+    q = q(:,1:4:end); % Downsample q
     xref = zeros(nx,size(q,2));
     q = q';
     
