@@ -1,0 +1,11 @@
+%% Serial Com Practice
+
+
+% create serial object
+device = serialport("COM4",115200);
+
+% write the numbers 1 to 5 in uint format
+write(device,1:5,"uint8")
+
+% read the numbers 1 to 5 in uint format
+read(device,5,"uint8")

@@ -57,18 +57,20 @@ MPCController.MV(2).RateMin = -5;
 MPCController.MV(2).RateMax = 5;
 
 %% MPC Controller Validation
-x0 = [1; 1; pi/2];
+x0 = [2; 1; pi/2];
 u0 = [0; 0];
 validateFcns(MPCController,x0,u0,[],{Ts});
 
 %% Create or Load Reference Trajectory
 try
-    load("BezierTrajectory.mat")
-    q = q(:,1:40:end); % Downsample q
-    xref = zeros(nx,size(q,2));
-    xref(1,:) = q(1,:);
-    xref(2,:) = q(2,:);
-    t = 1:Ts:Ts*size(q,2);
+    load("AStarTrajecotory.mat")
+    %q = q(:,1:40:end); % Downsample q
+    %xref = zeros(nx,size(q,2));
+    xref = zeros(nx,2);
+    xref(1,:) = path(1,:);
+    xref(2,:) = path(2,:);
+    %t = 1:Ts:Ts*size(q,2);
+    t = 1:Ts:Ts*2;
 catch
     tF = 60;
     t = 0:Ts:tF;
@@ -88,6 +90,7 @@ xHistory = x;
 uHistory = u;
 trajectorylookahead = 5;
 xref = [xref; xref(end,:); xref(end,:); xref(end,:); xref(end,:); xref(end,:)];
+disp(xref)
 
 [coreData, onlineData] = getCodeGenerationData(MPCController, x0, u0, {Ts});
 

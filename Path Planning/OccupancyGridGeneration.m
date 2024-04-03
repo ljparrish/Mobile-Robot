@@ -35,8 +35,8 @@ costValue(1:3,4) = 1; % Left division
 costValue(2:end, 4)= 1; % Middle division
 costValue(1:3,6) = 1; %Right Division
 
-costValuesMap = binaryOccupancyMap(costValue, 3);
-show(map)
+costValuesMap = binaryOccupancyMap(costValue, 1);
+show(costValuesMap)
 
 
 

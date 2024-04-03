@@ -1,7 +1,7 @@
 close all; clc; clear;
 %% A* Path Planning
 %Load occupancy grid
-load costvalueoccupancygrid.mat map
+load occupancygrid.mat map
 
 %Create State Space
 ss = stateSpaceSE2;
@@ -28,23 +28,23 @@ planner = plannerHybridAStar(sv, ...
 % angle in radians.
 
 startPose = [2 1 pi/2]; % [meters, meters, radians]
-show(map)
-pause(1);
-h=msgbox('Please Select the Target using the Left Mouse button');
-uiwait(h,5);
-if ishandle(h) == 1
-    delete(h);
-end
-xlabel('Please Select the Target using the Left Mouse button','Color','black');
-but=0;
-while (but ~= 1) %Repeat until the Left button is not clicked
-    [xval,yval,but]=ginput(1);
-end
-xval=floor(xval);
-yval=floor(yval);
-goalOrientation = -pi/2;
-goalPose = [xval yval goalOrientation];
-%goalPose = [8 8 2*pi];
+% show(map)
+% pause(1);
+% h=msgbox('Please Select the Target using the Left Mouse button');
+% uiwait(h,5);
+% if ishandle(h) == 1
+%     delete(h);
+% end
+% xlabel('Please Select the Target using the Left Mouse button','Color','black');
+% but=0;
+% while (but ~= 1) %Repeat until the Left button is not clicked
+%     [xval,yval,but]=ginput(1);
+% end
+% xval=floor(xval);
+% yval=floor(yval);
+% goalOrientation = -pi/2;
+% goalPose = [xval yval goalOrientation];
+goalPose = [8 8 2*pi];
 
 %Plan a path from the start pose to the goal pose.
 tic;
@@ -53,6 +53,7 @@ disp(toc);
 
 % Extract the path poses from the path object
 path = refpath.States;
+
 
 %Visualize the path using show function.
 
