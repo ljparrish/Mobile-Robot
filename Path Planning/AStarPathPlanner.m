@@ -53,13 +53,17 @@ disp(toc);
 
 % Extract the path poses from the path object
 path = refpath.States;
+path = path';
 
+timePoints = [0 50];
+timeVector = 0:0.1:50;
 
+[q, qd, qdd, pp] = bsplinepolytraj(path,timePoints,timeVector);
 %Visualize the path using show function.
 
 show(planner)
 
-save AStarTrajecotory.mat path
+save AStarTrajecotory.mat q
 
 
 

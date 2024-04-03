@@ -65,12 +65,16 @@ validateFcns(MPCController,x0,u0,[],{Ts});
 try
     load("AStarTrajecotory.mat")
     %q = q(:,1:40:end); % Downsample q
-    %xref = zeros(nx,size(q,2));
-    xref = zeros(nx,2);
-    xref(1,:) = path(1,:);
-    xref(2,:) = path(2,:);
-    %t = 1:Ts:Ts*size(q,2);
-    t = 1:Ts:Ts*2;
+    xref = zeros(nx,size(q,2));
+    q = q';
+    
+    xref = zeros(size(q,1),2);
+    xref(:,1) = q(:,1);
+    xref(:,2) = q(:,2);
+    xref(:,3) = q(:,3);
+    t = 0:Ts:Ts*(size(q,1)-1);
+    %t = 0:Ts:Ts*(size(q,1)-1);
+    t = t';
 catch
     tF = 60;
     t = 0:Ts:tF;
@@ -78,7 +82,7 @@ catch
     %xref(1,:) = 4*sin(t/7).*(1+cos(t/7));
     %xref(2,:) = 4*sin(t/7).*(1-cos(t/7));
 end
-    xref = xref';
+    %xref = xref';
 
 %% Simulate MPC Controller
 
@@ -90,10 +94,7 @@ xHistory = x;
 uHistory = u;
 trajectorylookahead = 5;
 xref = [xref; xref(end,:); xref(end,:); xref(end,:); xref(end,:); xref(end,:)];
-disp(xref)
-
 [coreData, onlineData] = getCodeGenerationData(MPCController, x0, u0, {Ts});
-
 tic;
 for k = 1:length(t)
     % Update state reference
@@ -109,7 +110,6 @@ for k = 1:length(t)
     xHistory = [xHistory x];
     uHistory = [uHistory u];
 end
-
 %% Codegen Block
 codeGenEnabled = 0;
 if(codeGenEnabled)
