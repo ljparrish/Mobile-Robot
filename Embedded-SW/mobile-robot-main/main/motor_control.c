@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
@@ -9,6 +10,12 @@
 #include "pid_ctrl.h"
 
 #include "include/mobile_robot_pins.h"
+
+// Macros for State Estimation
+#define PI 3.14159265
+#define WHEEL_BASE 20
+#define WHEEL_DIAMETER 6
+#define TICKS_PER_REVOLUTION 1120
 
 static const char *TAG_MOTOR = "Motor_Control";
 
@@ -140,6 +147,19 @@ void encoder_setup()
     ESP_ERROR_CHECK(pcnt_unit_enable(pcnt_unit_right));
     ESP_ERROR_CHECK(pcnt_unit_clear_count(pcnt_unit_right));
     ESP_ERROR_CHECK(pcnt_unit_start(pcnt_unit_right));
+}
+
+void estimate_state(double prev_state[3], double encoder_data[2]) {
+
+    double dist_l = (encoder_data[0]/TICKS_PER_REVOLUTION) * (PI * WHEEL_DIAMETER);
+    double dist_r = (encoder_data[1]/TICKS_PER_REVOLUTION) * (PI * WHEEL_DIAMETER);
+    double d = (dist_l+dist_r)/2;
+
+    double delta_theta = (dist_r-dist_l)/WHEEL_BASE;
+
+    prev_state[0] += d * cos(prev_state[2]+delta_theta/2);
+    prev_state[1] += d * sin(prev_state[2]+delta_theta/2);
+    prev_state[2] += delta_theta;
 }
 
 void vMotor_Routine()

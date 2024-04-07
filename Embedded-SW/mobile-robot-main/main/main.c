@@ -32,7 +32,7 @@ void vLed_blink_task()
 }
 
 // RTOS Task #2 - Measure Encoders
-void vMeasure_Encoders()
+void vMeasure_Encoders(double prev_state[3])
 {
     // Setup the rotary encoders
     encoder_setup();
@@ -40,6 +40,7 @@ void vMeasure_Encoders()
     // Initialize the pulse counters
     int right_current_pulse_cnt = 0;
     int left_current_pulse_cnt = 0;
+    
     while (1)
     {
         // Measure the Encoder Values
@@ -49,6 +50,12 @@ void vMeasure_Encoders()
         // Send measured values to the respective Queues
         xQueueSend(right_encoder_queue, (void*)&right_current_pulse_cnt, 10);
         xQueueSend(left_encoder_queue, (void*)&left_current_pulse_cnt, 10);
+
+        // Estimate the state
+        double encoder_data[] = {pcnt_unit_left, pcnt_unit_right};
+        estimate_state(prev_state, encoder_data);
+        x[i] = prev_state[0];
+        y[i] = prev_state[1];
 
         // Clear the pulse count
         pcnt_unit_clear_count(pcnt_unit_right);
@@ -197,6 +204,8 @@ void vESP_NOW()
 // Main function entry point here:
 void app_main(void)
 {
+
+    double prev_state[3] = {0, 0, 0};
     // Create Queues using xQueueCreate:
     // Parameters: | Number of values that can be stored in a queue | size in bytes of each variable the queue takes |
     right_encoder_queue = xQueueCreate(5, sizeof(int));
@@ -204,8 +213,8 @@ void app_main(void)
 
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
-    xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
-    //xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 1, NULL);
+    // xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
+    xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, prev_state, 1, NULL);
     //xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 1, NULL);
-    xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
+    // xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
 }
