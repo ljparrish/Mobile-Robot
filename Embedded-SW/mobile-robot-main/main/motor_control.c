@@ -11,12 +11,6 @@
 
 #include "include/mobile_robot_pins.h"
 
-// Macros for State Estimation
-#define PI 3.14159265
-#define WHEEL_BASE 20
-#define WHEEL_DIAMETER 6
-#define TICKS_PER_REVOLUTION 1120
-
 static const char *TAG_MOTOR = "Motor_Control";
 
 // Motor Configuration
@@ -39,6 +33,12 @@ pid_ctrl_block_handle_t right_pid_ctrl = NULL;
 // Encoder Configuration
 #define MOTOR_PCNT_HIGH_LIMIT 10000
 #define MOTOR_PCNT_LOW_LIMIT  -10000
+
+// Macros for State Estimation
+#define PI 3.14159265
+#define WHEEL_BASE 20
+#define WHEEL_DIAMETER 6
+#define TICKS_PER_REVOLUTION 1120
 
 // PID Configuration
 #define BDC_PID_LOOP_PERIOD_MS        10   // calculate the motor speed every 10ms
