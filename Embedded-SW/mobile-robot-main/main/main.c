@@ -54,8 +54,6 @@ void vMeasure_Encoders(double prev_state[3])
         // Estimate the state
         double encoder_data[] = {pcnt_unit_left, pcnt_unit_right};
         estimate_state(prev_state, encoder_data);
-        x[i] = prev_state[0];
-        y[i] = prev_state[1];
 
         // Clear the pulse count
         pcnt_unit_clear_count(pcnt_unit_right);
