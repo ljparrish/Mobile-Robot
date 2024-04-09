@@ -1,2 +1,2 @@
-idf_component_register(SRCS "esp_now.c" "main.c" "led_blink.c" "motor_control.c" "esp_now.c"
+idf_component_register(SRCS "main.c" "esp_now.c" "led_blink.c" "motor_control.c"
                        INCLUDE_DIRS "include")
