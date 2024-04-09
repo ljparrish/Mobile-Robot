@@ -41,7 +41,7 @@ void vESP_NOW()
 
     // Setup peer info type and register
     memset(&robot_info, 0, sizeof(robot_info));
-    memcpy(robot_info.peer_addr, s_usb_dongle_address, 6);
+    memcpy(robot_info.peer_addr, s_mobile_robot_address, 6);
     robot_info.encrypt = false;
     robot_info.channel = 0;
 
@@ -64,7 +64,7 @@ void vESP_NOW()
     while (1)
     {
         memcpy(&state_data.x_position, &counter, sizeof(counter));
-        esp_now_send(s_usb_dongle_address, (u_int8_t * )&state_data, sizeof(state_data));
+        esp_now_send(s_mobile_robot_address, (u_int8_t * )&state_data, sizeof(state_data));
         counter++;
         vTaskDelay(pdMS_TO_TICKS(ESP_NOW_RATE));
     }
