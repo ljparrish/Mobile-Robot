@@ -10,6 +10,7 @@
 #include "led_blink.c"
 #include "motor_control.c"
 #include "esp_now.c"
+#include "ultrasonic_measure.c"
 
 // Setup any Queues here!
 static QueueHandle_t right_encoder_queue;
@@ -34,7 +35,6 @@ void vLed_blink_task()
 // RTOS Task #2 - Measure Encoders
 void vMeasure_Encoders()
 {
-    // double *prev_state = (double *)pvParameters;
     // Setup the rotary encoders
     encoder_setup();
 
@@ -73,9 +73,34 @@ void vMeasure_Encoders()
 // RTOS Task #3 - Measure Ultrasonic Sensors
 void vMeasure_Ultrasonic()
 {
+    ultrasonic_setup();
+
     while (1)
     {
-        /* code */
+        float distance1;
+        esp_err_t res1 = ultrasonic_measure(&sensor1, MAX_DISTANCE_CM, &distance1);
+        if (res1 != ESP_OK)
+            handle_error(res1);
+        else
+            printf("Distance1: %0.04f cm\n", distance1 * 100);
+
+        float distance2;
+        esp_err_t res2 = ultrasonic_measure(&sensor2, MAX_DISTANCE_CM, &distance2);
+        if (res2 != ESP_OK)
+            handle_error(res1);
+        else
+            printf("Distance2: %0.04f cm\n", distance2 * 100);
+
+        float distance3;
+        esp_err_t res3 = ultrasonic_measure(&sensor3, MAX_DISTANCE_CM, &distance3);
+        if (res3 != ESP_OK)
+            handle_error(res1);
+        else
+            printf("Distance3: %0.04f cm\n", distance3 * 100);
+
+        printf("-----------------\n");
+
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
@@ -223,6 +248,7 @@ void app_main(void)
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
     xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
     xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 1, NULL); 
+    xTaskCreate(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
     //xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 1, NULL);
     xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
 }
