@@ -36,9 +36,14 @@ pid_ctrl_block_handle_t right_pid_ctrl = NULL;
 
 // Macros for State Estimation
 #define PI 3.14159265
-#define WHEEL_BASE 20
-#define WHEEL_DIAMETER 6
+#define WHEEL_BASE 0.2
+#define WHEEL_DIAMETER 0.06
 #define TICKS_PER_REVOLUTION 1120
+#define SCALING_FACTOR 3.2
+
+double x = 0.0;
+double y = 0.0;
+double theta = 0.0;
 
 // PID Configuration
 #define BDC_PID_LOOP_PERIOD_MS        10   // calculate the motor speed every 10ms
@@ -149,17 +154,17 @@ void encoder_setup()
     ESP_ERROR_CHECK(pcnt_unit_start(pcnt_unit_right));
 }
 
-void estimate_state(double prev_state[3], double encoder_data[2]) {
+void estimate_state(double encoder_left, double encoder_right) {
 
-    double dist_l = (encoder_data[0]/TICKS_PER_REVOLUTION) * (PI * WHEEL_DIAMETER);
-    double dist_r = (encoder_data[1]/TICKS_PER_REVOLUTION) * (PI * WHEEL_DIAMETER);
-    double d = (dist_l+dist_r)/2;
+    double dist_l = (encoder_left/TICKS_PER_REVOLUTION) * (PI * WHEEL_DIAMETER);
+    double dist_r = (encoder_right/TICKS_PER_REVOLUTION) * (PI * WHEEL_DIAMETER);
+    double d = SCALING_FACTOR * (dist_l+dist_r)/2;
 
-    double delta_theta = (dist_r-dist_l)/WHEEL_BASE;
+    double delta_theta = SCALING_FACTOR * (dist_r-dist_l)/WHEEL_BASE;
 
-    prev_state[0] += d * cos(prev_state[2]+delta_theta/2);
-    prev_state[1] += d * sin(prev_state[2]+delta_theta/2);
-    prev_state[2] += delta_theta;
+    x += d * cos(theta+delta_theta/2);
+    y += d * sin(theta+delta_theta/2);
+    theta += delta_theta;
 }
 
 void vMotor_Routine()
