@@ -209,7 +209,11 @@ void vESP_NOW()
 // Main function entry point here:
 void app_main(void)
 {
-
+    // Prints out the MAC Address
+    unsigned char mac[6] = {0};
+    esp_read_mac(mac,ESP_MAC_WIFI_STA);
+    ESP_LOGI(ESP_NOW_TAG, "MAC Address: %02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+    
     // Create Queues using xQueueCreate:
     // Parameters: | Number of values that can be stored in a queue | size in bytes of each variable the queue takes |
     right_encoder_queue = xQueueCreate(5, sizeof(int));
@@ -217,8 +221,8 @@ void app_main(void)
 
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
-    // xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
+    xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
     xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 1, NULL); 
     //xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 1, NULL);
-    // xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
+    xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
 }
