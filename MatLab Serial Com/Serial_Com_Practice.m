@@ -16,10 +16,10 @@ clc
 
 comChannel = serialportlist;
 
-s = serialport(comChannel(1),9600);
-data = [88, 99, 45];
-write(s, data, "int16")
+s = serialport(comChannel(1),115200);
+%data = [88, 99, 45];
+%write(s, data, "int16")
 
-r = read(s,256,"int16");
+%r = read(s,256,"int16");
 
-disp(r)
+%disp(r)
