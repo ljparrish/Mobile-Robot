@@ -10,6 +10,7 @@
 #include "led_blink.c"
 #include "motor_control.c"
 #include "esp_now.c"
+#include "ultrasonic_measure.c"
 
 // Setup any Queues here!
 static QueueHandle_t right_encoder_queue;
@@ -32,7 +33,7 @@ void vLed_blink_task()
 }
 
 // RTOS Task #2 - Measure Encoders
-void vMeasure_Encoders(double prev_state[3])
+void vMeasure_Encoders()
 {
     // Setup the rotary encoders
     encoder_setup();
@@ -51,24 +52,55 @@ void vMeasure_Encoders(double prev_state[3])
         xQueueSend(right_encoder_queue, (void*)&right_current_pulse_cnt, 10);
         xQueueSend(left_encoder_queue, (void*)&left_current_pulse_cnt, 10);
 
-        // Estimate the state
-        double encoder_data[] = {pcnt_unit_left, pcnt_unit_right};
-        estimate_state(prev_state, encoder_data);
+        // ESP_LOGI(TAG_MOTOR, "LEFT: %d", left_current_pulse_cnt);
+        // ESP_LOGI(TAG_MOTOR, "RIGHT: %d", right_current_pulse_cnt);
 
+        // Estimate state
+        estimate_state((double) left_current_pulse_cnt, (double) right_current_pulse_cnt);
+        
+        ESP_LOGI(TAG_MOTOR, "X: %f", x);
+        ESP_LOGI(TAG_MOTOR, "Y: %f", y);
+        ESP_LOGI(TAG_MOTOR, "T: %f", theta);
+    
         // Clear the pulse count
         pcnt_unit_clear_count(pcnt_unit_right);
         pcnt_unit_clear_count(pcnt_unit_left);
 
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
 // RTOS Task #3 - Measure Ultrasonic Sensors
 void vMeasure_Ultrasonic()
 {
+    ultrasonic_setup();
+
     while (1)
     {
-        /* code */
+        float distance1;
+        esp_err_t res1 = ultrasonic_measure(&sensor1, MAX_DISTANCE_CM, &distance1);
+        if (res1 != ESP_OK)
+            handle_error(res1);
+        else
+            printf("Distance1: %0.04f cm\n", distance1 * 100);
+
+        float distance2;
+        esp_err_t res2 = ultrasonic_measure(&sensor2, MAX_DISTANCE_CM, &distance2);
+        if (res2 != ESP_OK)
+            handle_error(res1);
+        else
+            printf("Distance2: %0.04f cm\n", distance2 * 100);
+
+        float distance3;
+        esp_err_t res3 = ultrasonic_measure(&sensor3, MAX_DISTANCE_CM, &distance3);
+        if (res3 != ESP_OK)
+            handle_error(res1);
+        else
+            printf("Distance3: %0.04f cm\n", distance3 * 100);
+
+        printf("-----------------\n");
+
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
@@ -203,7 +235,6 @@ void vESP_NOW()
 void app_main(void)
 {
 
-    double prev_state[3] = {0, 0, 0};
     // Create Queues using xQueueCreate:
     // Parameters: | Number of values that can be stored in a queue | size in bytes of each variable the queue takes |
     right_encoder_queue = xQueueCreate(5, sizeof(int));
@@ -212,7 +243,8 @@ void app_main(void)
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
     // xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
-    xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, prev_state, 1, NULL);
+    // xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 1, NULL); 
+    xTaskCreate(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
     //xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 1, NULL);
     // xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
 }
