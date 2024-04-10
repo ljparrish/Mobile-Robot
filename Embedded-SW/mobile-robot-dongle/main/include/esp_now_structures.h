@@ -14,4 +14,5 @@ typedef struct
     float ultrasonic_left;      // Left ultrasonic sensor distance value
     float ultrasonic_center;    // Center ultrasonic sensor distance value
     float ultrasonic_right;     // Right ultrasonic sensor distance value
+    u_int8_t counter;           // Counter for debugging
 } mobile_robot_state_info_t;

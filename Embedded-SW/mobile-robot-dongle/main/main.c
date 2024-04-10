@@ -65,9 +65,15 @@ void vESP_NOW()
 
 void app_main(void)
 {
+    // Prints out MAC Address
+    unsigned char mac[6] = {0};
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    ESP_LOGI(ESP_NOW_TAG, "MAC Address: %02X:%02X:%02X:%02X:%02X:%02X", mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+
+
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
-    //xTaskCreate(echo_task, "UART Echo", 2048, NULL, 1, NULL);
+    // xTaskCreate(echo_task, "UART Echo", 2048, NULL, 1, NULL);
     xTaskCreate(vESP_NOW, "ESP NOW Wireless", 8192, NULL, 10, NULL);
 }
 

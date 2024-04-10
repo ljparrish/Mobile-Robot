@@ -57,4 +57,5 @@ static void data_recieve_cb(const uint8_t *mac_address, uint8_t *incomingData, i
     ESP_LOGI(ESP_NOW_TAG,"X : %f",state_data.x_position);
     ESP_LOGI(ESP_NOW_TAG,"Y : %f",state_data.y_position);
     ESP_LOGI(ESP_NOW_TAG,"T : %f",state_data.theta);
+    ESP_LOGI(ESP_NOW_TAG, "Counter : %i", state_data.counter);
 }
