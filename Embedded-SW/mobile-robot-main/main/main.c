@@ -13,8 +13,19 @@
 #include "ultrasonic_measure.c"
 
 // Setup any Queues here!
+// Motor Signal Queues
 static QueueHandle_t right_encoder_queue;
 static QueueHandle_t left_encoder_queue;
+
+// Ultrasonic Sensor Data Queues
+static QueueHandle_t ultrasonic_left_queue;
+static QueueHandle_t ultrasonic_center_queue;
+static QueueHandle_t ultrasonic_right_queue;
+
+// State Variable Queues
+static QueueHandle_t x_position_queue;
+static QueueHandle_t y_position_queue;
+static QueueHandle_t theta_position_queue;
 
 // Write RTOS Callback functions here! (The RTOS task can also be defined in your .c file)
 
@@ -66,7 +77,12 @@ void vMeasure_Encoders()
         pcnt_unit_clear_count(pcnt_unit_right);
         pcnt_unit_clear_count(pcnt_unit_left);
 
-        vTaskDelay(pdMS_TO_TICKS(100));
+        // Send updated state to Queues
+        xQueueSend(x_position_queue, (void*)&x, 10);
+        xQueueSend(y_position_queue, (void*)&y, 10);
+        xQueueSend(theta_position_queue, (void*)&theta, 10);
+
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -99,6 +115,10 @@ void vMeasure_Ultrasonic()
             printf("Distance3: %0.04f cm\n", distance3 * 100);
 
         printf("-----------------\n");
+
+        xQueueSend(ultrasonic_left_queue, (void*)&distance1, 10);
+        xQueueSend(ultrasonic_center_queue, (void*)&distance2, 10);
+        xQueueSend(ultrasonic_right_queue, (void*)&distance3, 10);
 
         vTaskDelay(pdMS_TO_TICKS(100));
     }
@@ -220,10 +240,37 @@ void vESP_NOW()
         retry_counter++;
     }
 
+    // Setup local variables for info to send over ESP_NOW
+    float x = 0.0;
+    float y = 0.0;
+    float theta = 0.0;
+
+    int w_r = 0.0;
+    int w_l = 0.0;
+
+    float ultrasonic_left = 0.0; 
+    float ultrasonic_center = 0.0;
+    float ultrasonic_right = 0.0;
+
     float counter = 0;
     while (1)
     {
-        memcpy(&state_data.x_position, &counter, sizeof(counter));
+        // Recieve updated info from Queues
+        xQueueReceive(x_position_queue, (void*)&x, 0);
+        xQueueReceive(y_position_queue, (void*)&y, 0);
+        xQueueReceive(theta_position_queue, (void*)&theta, 0);
+
+        // Copy into send structure
+        memcpy(&state_data.x_position, &x, sizeof(x));
+        memcpy(&state_data.y_position, &y, sizeof(y));
+        memcpy(&state_data.theta, &theta, sizeof(theta));
+        memcpy(&state_data.w_left, &w_l, sizeof(w_l));
+        memcpy(&state_data.w_right, &w_r, sizeof(w_r));
+        memcpy(&state_data.ultrasonic_left, &ultrasonic_left, sizeof(ultrasonic_left));
+        memcpy(&state_data.ultrasonic_center, &ultrasonic_center, sizeof(ultrasonic_center));
+        memcpy(&state_data.ultrasonic_right, &ultrasonic_right, sizeof(ultrasonic_right));
+
+        // Send the Data
         esp_now_send(s_usb_dongle_address, (u_int8_t * )&state_data, sizeof(state_data));
         counter++;
         vTaskDelay(pdMS_TO_TICKS(ESP_NOW_RATE));
@@ -244,11 +291,20 @@ void app_main(void)
     right_encoder_queue = xQueueCreate(5, sizeof(int));
     left_encoder_queue = xQueueCreate(5, sizeof(int));
 
+    x_position_queue = xQueueCreate(5, sizeof(double));
+    y_position_queue = xQueueCreate(5, sizeof(double));
+    theta_position_queue = xQueueCreate(5, sizeof(double));
+
+    ultrasonic_left_queue = xQueueCreate(5, sizeof(float));
+    ultrasonic_center_queue = xQueueCreate(5, sizeof(float));
+    ultrasonic_right_queue = xQueueCreate(5, sizeof(float));
+
+
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
     xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
-    xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 1, NULL); 
-    xTaskCreate(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    //xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 1, NULL);
+    xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 10, NULL); 
+    //xTaskCreate(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
+    //xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, NULL);
     xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
 }
