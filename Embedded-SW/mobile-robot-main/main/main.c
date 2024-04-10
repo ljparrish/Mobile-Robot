@@ -299,7 +299,6 @@ void app_main(void)
     ultrasonic_center_queue = xQueueCreate(5, sizeof(float));
     ultrasonic_right_queue = xQueueCreate(5, sizeof(float));
 
-
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
     xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);

@@ -23,7 +23,7 @@
 static const char *ESP_NOW_TAG = "ESP_NOW";
 
 // Define the mobile robot's ESP32 MAC Address here!
-static uint8_t s_mobile_robot_address[ESP_NOW_ETH_ALEN] = {0x70, 0x04, 0x1D, 0xCD, 0xB8, 0x80};
+static uint8_t s_mobile_robot_address[ESP_NOW_ETH_ALEN] = {0x70, 0x04, 0x1D, 0xCD, 0xBC, 0x50};
 
 // Define the USB Dongle ESP32 MAC Address here!
 static uint8_t s_usb_dongle_address[ESP_NOW_ETH_ALEN] = {0xAC, 0x0B, 0xFB, 0x68, 0x1F, 0x8C};
@@ -54,5 +54,7 @@ static void data_recieve_cb(const uint8_t *mac_address, uint8_t *incomingData, i
 {
     ESP_LOGI(ESP_NOW_TAG,"Data recieved:");
     memcpy(&state_data, incomingData, sizeof(state_data));
-    ESP_LOGI(ESP_NOW_TAG,"X Position = %f",state_data.x_position);
+    ESP_LOGI(ESP_NOW_TAG,"X : %f",state_data.x_position);
+    ESP_LOGI(ESP_NOW_TAG,"Y : %f",state_data.y_position);
+    ESP_LOGI(ESP_NOW_TAG,"T : %f",state_data.theta);
 }
