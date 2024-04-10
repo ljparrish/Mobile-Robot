@@ -17,9 +17,9 @@ clc
 comChannel = serialportlist;
 
 s = serialport(comChannel(1),115200);
-%data = [88, 99, 45];
-%write(s, data, "int16")
+data = [88, 99, 45];
+write(s, data, "int8")
 
-%r = read(s,256,"int16");
+r = read(s,3,"char");
 
 %disp(r)
