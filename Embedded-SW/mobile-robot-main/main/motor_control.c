@@ -39,11 +39,12 @@ pid_ctrl_block_handle_t right_pid_ctrl = NULL;
 #define WHEEL_BASE 0.2
 #define WHEEL_DIAMETER 0.06
 #define TICKS_PER_REVOLUTION 1120
-#define SCALING_FACTOR 3.2
+#define SCALING_FACTOR_TRANSLATION 1.85
+#define SCALING_FACTOR_ROTATION 1.66
 
-double x = 0.0;
-double y = 0.0;
-double theta = 0.0;
+float x = 0.0;
+float y = 0.0;
+float theta = 0.0;
 
 // PID Configuration
 #define BDC_PID_LOOP_PERIOD_MS        10   // calculate the motor speed every 10ms
@@ -154,13 +155,13 @@ void encoder_setup()
     ESP_ERROR_CHECK(pcnt_unit_start(pcnt_unit_right));
 }
 
-void estimate_state(double encoder_left, double encoder_right) {
+void estimate_state(float encoder_left, float encoder_right) {
 
-    double dist_l = (encoder_left/TICKS_PER_REVOLUTION) * (PI * WHEEL_DIAMETER);
-    double dist_r = (encoder_right/TICKS_PER_REVOLUTION) * (PI * WHEEL_DIAMETER);
-    double d = SCALING_FACTOR * (dist_l+dist_r)/2;
+    float dist_l = (encoder_left/TICKS_PER_REVOLUTION) * (PI * WHEEL_DIAMETER);
+    float dist_r = (encoder_right/TICKS_PER_REVOLUTION) * (PI * WHEEL_DIAMETER);
+    float d = SCALING_FACTOR_TRANSLATION * (dist_l+dist_r)/2;
 
-    double delta_theta = SCALING_FACTOR * (dist_r-dist_l)/WHEEL_BASE;
+    float delta_theta = SCALING_FACTOR_ROTATION * (dist_r-dist_l)/WHEEL_BASE;
 
     x += d * cos(theta+delta_theta/2);
     y += d * sin(theta+delta_theta/2);

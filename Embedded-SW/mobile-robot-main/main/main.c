@@ -241,10 +241,6 @@ void vESP_NOW()
     }
 
     // Setup local variables for info to send over ESP_NOW
-    float x = 0.0;
-    float y = 0.0;
-    float theta = 0.0;
-
     int w_r = 0.0;
     int w_l = 0.0;
 
@@ -252,13 +248,18 @@ void vESP_NOW()
     float ultrasonic_center = 0.0;
     float ultrasonic_right = 0.0;
 
-    float counter = 0;
+    u_int8_t counter = 0;
     while (1)
     {
         // Recieve updated info from Queues
-        xQueueReceive(x_position_queue, (void*)&x, 0);
-        xQueueReceive(y_position_queue, (void*)&y, 0);
-        xQueueReceive(theta_position_queue, (void*)&theta, 0);
+        //xQueueReceive(x_position_queue, (void*)&x, 0);
+        //xQueueReceive(y_position_queue, (void*)&y, 0);
+        //xQueueReceive(theta_position_queue, (void*)&theta, 0);
+
+        // Debug
+        ESP_LOGI(ESP_NOW_TAG, "X: %f", x);
+        ESP_LOGI(ESP_NOW_TAG, "Y: %f", y);
+        ESP_LOGI(ESP_NOW_TAG, "T: %f", theta);
 
         // Copy into send structure
         memcpy(&state_data.x_position, &x, sizeof(x));
@@ -269,10 +270,12 @@ void vESP_NOW()
         memcpy(&state_data.ultrasonic_left, &ultrasonic_left, sizeof(ultrasonic_left));
         memcpy(&state_data.ultrasonic_center, &ultrasonic_center, sizeof(ultrasonic_center));
         memcpy(&state_data.ultrasonic_right, &ultrasonic_right, sizeof(ultrasonic_right));
+        memcpy(&state_data.counter, &counter, sizeof(counter));
 
         // Send the Data
         esp_now_send(s_usb_dongle_address, (u_int8_t * )&state_data, sizeof(state_data));
         counter++;
+        ESP_LOGI(ESP_NOW_TAG, "Counter Value = %i", counter);
         vTaskDelay(pdMS_TO_TICKS(ESP_NOW_RATE));
     }
      
