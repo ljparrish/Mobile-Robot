@@ -46,9 +46,20 @@ disp(waypoints)
 %plot(waypoints(:,1),waypoints(:,2))
 
 %% B-Spline Curve Generation
+xValues = waypoints(1,:);
+yValues = waypoints(2,:);
+totalDistance = 0;
+for i = 1:1:length(xValues)-1
+    xDiff = xValues(i+1)-xValues(i);
+    tempDistance = sqrt(((xValues(i+1)-xValues(i))^2)+((yValues(i+1)-yValues(i))^2));
+    totalDistance = totalDistance + tempDistance;
+end
+robotAvgSpeed = 0.5;
+endTimePoint = totalDistance/robotAvgSpeed;
+disp(endTimePoint)
+timePoints = [0 endTimePoint];
+timeVector = 0:0.1:endTimePoint;
 
-timePoints = [0 50];
-timeVector = 0:0.1:50;
 
 [q, qd, qdd, pp] = bsplinepolytraj(waypoints,timePoints,timeVector);
 

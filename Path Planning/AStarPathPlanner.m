@@ -49,19 +49,29 @@ goalPose = [8 8 2*pi];
 %Plan a path from the start pose to the goal pose.
 tic;
 refpath = plan(planner,startPose,goalPose,SearchMode='greedy');     
-disp(toc);
+%disp(toc);
 
 % Extract the path poses from the path object
-path = refpath.States;
-path = path';
+points = refpath.States;
+points = points';
+xValues = points(1,:);
+yValues = points(2,:);
+totalDistance = 0;
+for i = 1:1:length(xValues)-1
+    xDiff = xValues(i+1)-xValues(i);
+    tempDistance = sqrt(((xValues(i+1)-xValues(i))^2)+((yValues(i+1)-yValues(i))^2));
+    totalDistance = totalDistance + tempDistance;
+end
+robotAvgSpeed = 0.5;
+endTimePoint = totalDistance/robotAvgSpeed;
+disp(endTimePoint)
+timePoints = [0 endTimePoint];
+timeVector = 0:0.1:endTimePoint;
 
-timePoints = [0 50];
-timeVector = 0:0.1:50;
-
-[q, qd, qdd, pp] = bsplinepolytraj(path,timePoints,timeVector);
+[q, qd, qdd, pp] = bsplinepolytraj(points,timePoints,timeVector);
 %Visualize the path using show function.
 
-show(planner)
+%show(planner)
 
 save AStarTrajecotory.mat q
 
