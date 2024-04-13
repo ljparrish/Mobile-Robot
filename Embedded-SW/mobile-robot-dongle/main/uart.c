@@ -5,9 +5,10 @@
 #include "esp_log.h"
 #include "sdkconfig.h"
 #include "driver/uart.h"
+#include "string.h"
 
-#define ECHO_TEST_TXD (20)
-#define ECHO_TEST_RXD (21)
+#define ECHO_TEST_TXD (1)
+#define ECHO_TEST_RXD (3)
 #define ECHO_TEST_RTS (UART_PIN_NO_CHANGE)
 #define ECHO_TEST_CTS (UART_PIN_NO_CHANGE)
 
@@ -51,4 +52,36 @@ static void echo_task(void * arg)
             data[len] = '\0';
         }
     } 
+}
+
+void stream_task(void * arg)
+{
+    // Setup UART Parameters
+    uart_config_t uart_config = {
+        .baud_rate = ECHO_UART_BAUD_RATE,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
+    };
+    int intr_alloc_flags= 0;
+
+    // Install and Initialize the UART Drivers
+    ESP_ERROR_CHECK(uart_driver_install(ECHO_UART_PORT_NUM, BUF_SIZE * 2, 0, 0, NULL, intr_alloc_flags));
+    ESP_ERROR_CHECK(uart_param_config(ECHO_UART_PORT_NUM, &uart_config));
+    ESP_ERROR_CHECK(uart_set_pin(ECHO_UART_PORT_NUM, ECHO_TEST_TXD, ECHO_TEST_RXD, ECHO_TEST_RTS, ECHO_TEST_CTS));
+
+    // Configure a temporary buffer for the incoming data
+    uint8_t *data = "UART Test Transmission";
+
+    uint8_t counter = 0;
+    while (1)
+    {
+        
+        ESP_ERROR_CHECK(uart_write_bytes(ECHO_UART_PORT_NUM, (const char *) data, strlen(data)));
+        counter++;
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+    
 }
