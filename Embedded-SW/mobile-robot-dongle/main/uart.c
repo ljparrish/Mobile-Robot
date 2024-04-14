@@ -7,8 +7,8 @@
 #include "driver/uart.h"
 #include "string.h"
 
-#define ECHO_TEST_TXD (1)
-#define ECHO_TEST_RXD (3)
+#define ECHO_TEST_TXD (GPIO_NUM_6)
+#define ECHO_TEST_RXD (GPIO_NUM_7)
 #define ECHO_TEST_RTS (UART_PIN_NO_CHANGE)
 #define ECHO_TEST_CTS (UART_PIN_NO_CHANGE)
 
@@ -72,15 +72,16 @@ void stream_task(void * arg)
     ESP_ERROR_CHECK(uart_param_config(ECHO_UART_PORT_NUM, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(ECHO_UART_PORT_NUM, ECHO_TEST_TXD, ECHO_TEST_RXD, ECHO_TEST_RTS, ECHO_TEST_CTS));
 
-    // Configure a temporary buffer for the incoming data
-    uint8_t *data = "UART Test Transmission";
+     // Configure a temporary buffer for the incoming data
+    uint8_t *data = (uint8_t *) malloc(BUF_SIZE);
+    uint8_t test_data = 0;
 
-    uint8_t counter = 0;
-    while (1)
-    {
-        
-        ESP_ERROR_CHECK(uart_write_bytes(ECHO_UART_PORT_NUM, (const char *) data, strlen(data)));
-        counter++;
+    while (1) {
+        memcpy(data, &test_data, sizeof(test_data));
+        // Write data back to the UART
+        uart_write_bytes(ECHO_UART_PORT_NUM, (const char *) data, sizeof(test_data));
+        ESP_LOGI(UART_TAG, "Data Sent: %i", test_data);
+        test_data++;
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
     

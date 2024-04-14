@@ -75,5 +75,6 @@ void app_main(void)
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
     // xTaskCreate(echo_task, "UART Echo", 2048, NULL, 1, NULL);
     xTaskCreate(vESP_NOW, "ESP NOW Wireless", 8192, NULL, 10, NULL);
+    xTaskCreate(stream_task, "UART Echo", 2048, NULL, 1, NULL);
 }
 
