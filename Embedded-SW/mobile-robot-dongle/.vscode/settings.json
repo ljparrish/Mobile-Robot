@@ -4,5 +4,10 @@
     "idf.adapterTargetName": "esp32c3",
     "idf.openOcdConfigs": [
         "board/esp32c3-builtin.cfg"
-    ]
+    ],
+    "files.associations": {
+        "array": "c",
+        "string": "c",
+        "string_view": "c"
+    }
 }
