@@ -30,6 +30,7 @@ static uint8_t s_usb_dongle_address[ESP_NOW_ETH_ALEN] = {0xAC, 0x0B, 0xFB, 0x68,
 
 // Global Variables
 mobile_robot_state_info_t state_data;
+mobile_robot_command_t robot_cmd;
 
 esp_now_peer_info_t dongle_info;
 
@@ -48,11 +49,4 @@ static void wifi_init(void)
 static void data_send_cb(const uint8_t *mac_address, esp_now_send_status_t status)
 {
     ESP_LOGI(ESP_NOW_TAG,"Data send status: %i",status);
-}
-
-static void data_recieve_cb(const uint8_t *mac_address, uint8_t *incomingData, int length)
-{
-    ESP_LOGI(ESP_NOW_TAG,"Data recieved:");
-    memcpy(&state_data, incomingData, sizeof(state_data));
-    ESP_LOGI(ESP_NOW_TAG,"X Position = %f",state_data.x_position);
 }
