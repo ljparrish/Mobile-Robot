@@ -26,7 +26,7 @@ static const char *ESP_NOW_TAG = "ESP_NOW";
 static uint8_t s_mobile_robot_address[ESP_NOW_ETH_ALEN] = {0x70, 0x04, 0x1D, 0xCD, 0xBC, 0x50};
 
 // Define the USB Dongle ESP32 MAC Address here!
-static uint8_t s_usb_dongle_address[ESP_NOW_ETH_ALEN] = {0xAC, 0x0B, 0xFB, 0x68, 0x1F, 0x8C};
+static uint8_t s_usb_dongle_address[ESP_NOW_ETH_ALEN] = {0xD4, 0xF9, 0x8D, 0x04, 0x1A, 0xCC};
 
 // Global Variables
 mobile_robot_state_info_t state_data;
