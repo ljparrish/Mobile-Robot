@@ -2,16 +2,13 @@ clc; clear; close all;
 %% 
 xPos = 20;
 yPos = 10;
-theta = pi/4;
-theta = rad2deg(theta);
+theta = pi/2;
 
-robotWidth = 10; % Change values
-robotLength = 5; % Change values
+robotWidth = 0.2; % Change values
+robotLength = 0.2; % Change values
+[newX, newY] = GenerateRobot(xPos, yPos, robotLength, robotWidth, theta);
+fill(newX, newY, 'r', 'LineStyle','none');
 
-for i = 1:1:length(xPos)
-
-    GenerateRobot(xPos(i), yPos(i), robotLength, robotWidth, 'r', theta)
-end
   
 
 
