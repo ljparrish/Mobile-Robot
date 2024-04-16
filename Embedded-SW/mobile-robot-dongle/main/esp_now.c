@@ -14,6 +14,7 @@
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_now.h"
+#include "string.h"
 
 #include "include/esp_now_structures.h"
 
@@ -30,6 +31,7 @@ static uint8_t s_usb_dongle_address[ESP_NOW_ETH_ALEN] = {0xAC, 0x0B, 0xFB, 0x68,
 
 // Global Variables
 mobile_robot_state_info_t state_data;
+mobile_robot_command_t robot_cmd;
 
 esp_now_peer_info_t robot_info;
 
@@ -45,17 +47,17 @@ static void wifi_init(void)
     ESP_ERROR_CHECK( esp_wifi_start());
 }
 
+static void init_nvs()
+{
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK( nvs_flash_erase() );
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK( ret );
+}
+
 static void data_send_cb(const uint8_t *mac_address, esp_now_send_status_t status)
 {
     ESP_LOGI(ESP_NOW_TAG,"Data send status: %i",status);
-}
-
-static void data_recieve_cb(const uint8_t *mac_address, uint8_t *incomingData, int length)
-{
-    ESP_LOGI(ESP_NOW_TAG,"Data recieved:");
-    memcpy(&state_data, incomingData, sizeof(state_data));
-    ESP_LOGI(ESP_NOW_TAG,"X : %f",state_data.x_position);
-    ESP_LOGI(ESP_NOW_TAG,"Y : %f",state_data.y_position);
-    ESP_LOGI(ESP_NOW_TAG,"T : %f",state_data.theta);
-    ESP_LOGI(ESP_NOW_TAG, "Counter : %i", state_data.counter);
 }

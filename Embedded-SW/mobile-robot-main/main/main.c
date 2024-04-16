@@ -10,7 +10,11 @@
 #include "led_blink.c"
 #include "motor_control.c"
 #include "esp_now.c"
-#include "ultrasonic_measure.c"
+// #include "ultrasonic_measure.c"
+// TODO: Debug the including ultrasonic sensor code
+
+// Define parameters
+#define debug_statements 1
 
 // Setup any Queues here!
 // Motor Signal Queues
@@ -22,10 +26,26 @@ static QueueHandle_t ultrasonic_left_queue;
 static QueueHandle_t ultrasonic_center_queue;
 static QueueHandle_t ultrasonic_right_queue;
 
-// State Variable Queues
-static QueueHandle_t x_position_queue;
-static QueueHandle_t y_position_queue;
-static QueueHandle_t theta_position_queue;
+// Motor Command Queue
+static QueueHandle_t robot_cmd_queue;
+
+// ESP NOW Data Recieved Callback Function
+static void data_recieve_cb(const uint8_t *mac_address, uint8_t *incomingData, int length)
+{
+    
+    memcpy(&robot_cmd, incomingData, sizeof(robot_cmd));
+
+    // Send to motor command queue
+    xQueueSend(robot_cmd_queue, (void*)&robot_cmd, 5);
+
+    if(debug_statements)
+    {
+        ESP_LOGI(ESP_NOW_TAG,"Data recieved:");
+        ESP_LOGI(ESP_NOW_TAG,"w_r : %i",robot_cmd.w_right_cmd);
+        ESP_LOGI(ESP_NOW_TAG,"w_l : %i",robot_cmd.w_left_cmd);
+    }
+    
+}
 
 // Write RTOS Callback functions here! (The RTOS task can also be defined in your .c file)
 
@@ -67,7 +87,7 @@ void vMeasure_Encoders()
         // ESP_LOGI(TAG_MOTOR, "RIGHT: %d", right_current_pulse_cnt);
 
         // Estimate state
-        estimate_state((double) left_current_pulse_cnt, (double) right_current_pulse_cnt);
+        estimate_state((float) left_current_pulse_cnt, (float) right_current_pulse_cnt);
         
         ESP_LOGI(TAG_MOTOR, "X: %f", x);
         ESP_LOGI(TAG_MOTOR, "Y: %f", y);
@@ -77,16 +97,13 @@ void vMeasure_Encoders()
         pcnt_unit_clear_count(pcnt_unit_right);
         pcnt_unit_clear_count(pcnt_unit_left);
 
-        // Send updated state to Queues
-        xQueueSend(x_position_queue, (void*)&x, 10);
-        xQueueSend(y_position_queue, (void*)&y, 10);
-        xQueueSend(theta_position_queue, (void*)&theta, 10);
-
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
 // RTOS Task #3 - Measure Ultrasonic Sensors
+// TODO: Fix include errors for ultrasonic.h and ultrasonic.c
+/*
 void vMeasure_Ultrasonic()
 {
     ultrasonic_setup();
@@ -123,6 +140,7 @@ void vMeasure_Ultrasonic()
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
+*/
 
 // RTOS Task #4 - Motor PID Control
 void vMotor_PID_Control()
@@ -153,22 +171,22 @@ void vMotor_PID_Control()
     ESP_ERROR_CHECK(pid_new_control_block(&pid_config, &left_pid_ctrl));
 
     // Initialize Measured Pulse counts
-    int right_motor_pulse_cnt = 0;
-    int left_motor_pulse_cnt = 0;
+    int8_t right_motor_pulse_cnt = 0;
+    int8_t left_motor_pulse_cnt = 0;
 
     // Initialize Motor Setpoints
-    int left_motor_setpoint = 30;
-    int right_motor_setpoint = 30;
+    mobile_robot_command_t cmd = {0};
 
     while (1)
     {
         // Receives info from queues if available
         xQueueReceive(right_encoder_queue, (void *) &right_motor_pulse_cnt, 0);
         xQueueReceive(left_encoder_queue, (void *) &left_motor_pulse_cnt, 0);
+        xQueueReceive(robot_cmd_queue, (void *)&cmd, 0);
         ESP_LOGI(TAG_MOTOR, "L: %d R: %d", left_motor_pulse_cnt, right_motor_pulse_cnt);
         
         // Calculate Left Wheel Error and PID output
-        float left_error = left_motor_setpoint - left_motor_pulse_cnt;
+        float left_error = cmd.w_left_cmd - left_motor_pulse_cnt;
         float left_speed = 0;
         pid_compute(left_pid_ctrl, left_error, &left_speed);
         if(left_speed > 0)
@@ -180,7 +198,7 @@ void vMotor_PID_Control()
         }
 
         // Calculate Right Wheel Error and PID output
-        float right_error = right_motor_setpoint - right_motor_pulse_cnt;
+        float right_error = cmd.w_right_cmd - right_motor_pulse_cnt;
         float right_speed = 0;
         pid_compute(right_pid_ctrl, right_error, &right_speed);
         if(right_speed > 0)
@@ -241,30 +259,25 @@ void vESP_NOW()
     }
 
     // Setup local variables for info to send over ESP_NOW
-    int w_r = 0.0;
-    int w_l = 0.0;
+    int8_t w_r = 0;
+    int8_t w_l = 0;
 
-    float ultrasonic_left = 0.0; 
-    float ultrasonic_center = 0.0;
-    float ultrasonic_right = 0.0;
+    u_int8_t ultrasonic_left = 0; 
+    u_int8_t ultrasonic_center = 0;
+    u_int8_t ultrasonic_right = 0;
 
     u_int8_t counter = 0;
     while (1)
     {
-        // Recieve updated info from Queues
-        //xQueueReceive(x_position_queue, (void*)&x, 0);
-        //xQueueReceive(y_position_queue, (void*)&y, 0);
-        //xQueueReceive(theta_position_queue, (void*)&theta, 0);
-
-        // Debug
-        ESP_LOGI(ESP_NOW_TAG, "X: %f", x);
-        ESP_LOGI(ESP_NOW_TAG, "Y: %f", y);
-        ESP_LOGI(ESP_NOW_TAG, "T: %f", theta);
+        if (debug_statements)
+        {
+           // Debug
+            ESP_LOGI(ESP_NOW_TAG, "X: %f", x);
+            ESP_LOGI(ESP_NOW_TAG, "Y: %f", y);
+            ESP_LOGI(ESP_NOW_TAG, "T: %f", theta);
+        }
 
         // Copy into send structure
-        memcpy(&state_data.x_position, &x, sizeof(x));
-        memcpy(&state_data.y_position, &y, sizeof(y));
-        memcpy(&state_data.theta, &theta, sizeof(theta));
         memcpy(&state_data.w_left, &w_l, sizeof(w_l));
         memcpy(&state_data.w_right, &w_r, sizeof(w_r));
         memcpy(&state_data.ultrasonic_left, &ultrasonic_left, sizeof(ultrasonic_left));
@@ -291,16 +304,14 @@ void app_main(void)
     
     // Create Queues using xQueueCreate:
     // Parameters: | Number of values that can be stored in a queue | size in bytes of each variable the queue takes |
-    right_encoder_queue = xQueueCreate(5, sizeof(int));
-    left_encoder_queue = xQueueCreate(5, sizeof(int));
+    right_encoder_queue = xQueueCreate(5, sizeof(int8_t));
+    left_encoder_queue = xQueueCreate(5, sizeof(int8_t));
 
-    x_position_queue = xQueueCreate(5, sizeof(double));
-    y_position_queue = xQueueCreate(5, sizeof(double));
-    theta_position_queue = xQueueCreate(5, sizeof(double));
+    ultrasonic_left_queue = xQueueCreate(5, sizeof(u_int8_t));
+    ultrasonic_center_queue = xQueueCreate(5, sizeof(u_int8_t));
+    ultrasonic_right_queue = xQueueCreate(5, sizeof(u_int8_t));
 
-    ultrasonic_left_queue = xQueueCreate(5, sizeof(float));
-    ultrasonic_center_queue = xQueueCreate(5, sizeof(float));
-    ultrasonic_right_queue = xQueueCreate(5, sizeof(float));
+    robot_cmd_queue = xQueueCreate(10, sizeof(mobile_robot_command_t));
 
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
