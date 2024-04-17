@@ -33,7 +33,7 @@ static void data_recieve_cb(const uint8_t *mac_address, uint8_t *incomingData, i
         ESP_LOGI(ESP_NOW_TAG,"u_l : %d", state_data.ultrasonic_left);
         ESP_LOGI(ESP_NOW_TAG,"u_c : %d", state_data.ultrasonic_center);
         ESP_LOGI(ESP_NOW_TAG,"u_r : %d", state_data.ultrasonic_right);
-        ESP_LOGI(ESP_NOW_TAG,"u_r : %d", state_data.counter);
+        ESP_LOGI(ESP_NOW_TAG,"cnt : %d", state_data.counter);
     }
 }
 
@@ -108,7 +108,7 @@ void vUART_Communication()
             memcpy(&robot_cmd, data, sizeof(robot_cmd));
 
             // Send the data into the queue
-            xQueueSend(robot_cmd_queue, (void*)&robot_cmd, 5);
+            xQueueSend(robot_cmd_queue, (void*)&robot_cmd, 0);
         }
         
         // Check if there is data in the robot_info_queue, we send it back via UART
