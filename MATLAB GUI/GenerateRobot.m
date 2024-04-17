@@ -1,10 +1,10 @@
 %% Create Car
-function GenerateRobot(x_car, y_car, l_car, w_car, color, angle)
+function [newXCar, newYCar] = GenerateRobot(x_car, y_car, l_car, w_car, angle)
 %This function will create a rectangle that represents a car in the plot
 
 %Defines rotation matrix that accepts angle input
-rotationMatrix = [cosd(angle), -sind(angle) ; sind(angle), cosd(angle)];
-
+rotationMatrix = [cos(angle), -sin(angle) ; sin(angle), cos(angle)];
+disp(rotationMatrix)
 %Defines the rectangle the origin which we will use to calculate new
 %rotated points
 baseXCar = [(0 - (l_car/2)), (0 + (l_car/2)), (0 + (l_car/2)), (0 - (l_car/2))];
@@ -15,6 +15,7 @@ baseYCar = [(0 - (w_car/2)), (0 - (w_car/2)), (0 + (w_car/2)), (0 + (w_car/2))];
 %Uses the origin rectangle and separates the x and y components into column
 %vector
 basePoint1 = [baseXCar(1); baseYCar(1)];
+disp(basePoint1)
 basePoint2 = [baseXCar(2); baseYCar(2)];
 basePoint3 = [baseXCar(3); baseYCar(3)];
 basePoint4 = [baseXCar(4); baseYCar(4)];
@@ -56,5 +57,5 @@ newXCar = [rotatedPoint1(1,:), rotatedPoint2(1,:), rotatedPoint3(1,:), rotatedPo
 newYCar = [rotatedPoint1(2,1), rotatedPoint2(2,1), rotatedPoint3(2,1), rotatedPoint4(2,1)];
 
 %Plots the car with the x and y coordinates and inputted color
-fill(newXCar, newYCar, color, 'LineStyle','none');
+%fill(newXCar, newYCar, color, 'LineStyle','none');
 end
