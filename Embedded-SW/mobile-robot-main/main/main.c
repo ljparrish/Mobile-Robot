@@ -152,9 +152,9 @@ void vMotor_PID_Control()
 
     // Sets up PID controller parameters
     pid_ctrl_parameter_t pid_parameters = {
-        .kp = 1.6,
-        .ki = 0.4,
-        .kd = 0.2,
+        .kp = 8.6,
+        .ki = 1.4,
+        .kd = 2.2,
         .cal_type = PID_CAL_TYPE_INCREMENTAL,
         .max_output = BDC_MCPWM_DUTY_TICK_MAX - 1,
         .min_output = -(BDC_MCPWM_DUTY_TICK_MAX - 1),
@@ -170,10 +170,6 @@ void vMotor_PID_Control()
     ESP_ERROR_CHECK(pid_new_control_block(&pid_config, &right_pid_ctrl));
     ESP_ERROR_CHECK(pid_new_control_block(&pid_config, &left_pid_ctrl));
 
-    // Initialize Measured Pulse counts
-    int8_t right_motor_pulse_cnt = 0;
-    int8_t left_motor_pulse_cnt = 0;
-
     // Initialize Motor Setpoints
     mobile_robot_command_t cmd = {0};
 
@@ -183,7 +179,13 @@ void vMotor_PID_Control()
         xQueueReceive(right_encoder_queue, (void *) &right_motor_pulse_cnt, 0);
         xQueueReceive(left_encoder_queue, (void *) &left_motor_pulse_cnt, 0);
         xQueueReceive(robot_cmd_queue, (void *)&cmd, 0);
-        ESP_LOGI(TAG_MOTOR, "L: %d R: %d", left_motor_pulse_cnt, right_motor_pulse_cnt);
+        
+
+        if(debug_statements)
+        {
+            ESP_LOGI(TAG_MOTOR, "L_cmd: %d R_cmd: %d",cmd.w_left_cmd, cmd.w_right_cmd);
+            ESP_LOGI(TAG_MOTOR, "    L: %d     R: %d", left_motor_pulse_cnt, right_motor_pulse_cnt);
+        }
         
         // Calculate Left Wheel Error and PID output
         float left_error = cmd.w_left_cmd - left_motor_pulse_cnt;
@@ -259,12 +261,11 @@ void vESP_NOW()
     }
 
     // Setup local variables for info to send over ESP_NOW
-    int8_t w_r = 0;
-    int8_t w_l = 0;
-
     u_int8_t ultrasonic_left = 0; 
     u_int8_t ultrasonic_center = 0;
     u_int8_t ultrasonic_right = 0;
+
+    // TODO: Recieve values from ultrasonic sensor queues and update local vars
 
     u_int8_t counter = 0;
     while (1)
@@ -278,8 +279,8 @@ void vESP_NOW()
         }
 
         // Copy into send structure
-        memcpy(&state_data.w_left, &w_l, sizeof(w_l));
-        memcpy(&state_data.w_right, &w_r, sizeof(w_r));
+        memcpy(&state_data.w_left, &left_motor_pulse_cnt, sizeof(left_motor_pulse_cnt));
+        memcpy(&state_data.w_right, &right_motor_pulse_cnt, sizeof(right_motor_pulse_cnt));
         memcpy(&state_data.ultrasonic_left, &ultrasonic_left, sizeof(ultrasonic_left));
         memcpy(&state_data.ultrasonic_center, &ultrasonic_center, sizeof(ultrasonic_center));
         memcpy(&state_data.ultrasonic_right, &ultrasonic_right, sizeof(ultrasonic_right));
@@ -318,6 +319,6 @@ void app_main(void)
     xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
     xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 10, NULL); 
     //xTaskCreate(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    //xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, NULL);
+    xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, NULL);
     xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
 }

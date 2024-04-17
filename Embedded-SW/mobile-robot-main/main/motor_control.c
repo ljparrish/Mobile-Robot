@@ -46,6 +46,10 @@ float x = 0.0;
 float y = 0.0;
 float theta = 0.0;
 
+// Initialize Measured Pulse counts
+int8_t right_motor_pulse_cnt = 0;
+int8_t left_motor_pulse_cnt = 0;
+
 // PID Configuration
 #define BDC_PID_LOOP_PERIOD_MS        10   // calculate the motor speed every 10ms
 #define BDC_PID_EXPECT_SPEED          20  // expected motor speed, in the pulses counted by the rotary encoder
