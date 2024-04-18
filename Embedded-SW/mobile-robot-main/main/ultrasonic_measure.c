@@ -12,16 +12,16 @@ static const char *TAG_ULTRA = "Ultra_Measure";
 
 // Macros for each ultrasonic sensor
 ultrasonic_sensor_t sensor1 = {
-    .trigger_pin = GPIO_NUM_10,
-    .echo_pin = GPIO_NUM_35
+    .trigger_pin = GPIO_NUM_6,
+    .echo_pin = GPIO_NUM_13
 };
 ultrasonic_sensor_t sensor2 = {
     .trigger_pin = GPIO_NUM_9,
     .echo_pin = GPIO_NUM_36
 };
     ultrasonic_sensor_t sensor3 = {
-    .trigger_pin = GPIO_NUM_6,
-    .echo_pin = GPIO_NUM_13
+    .trigger_pin = GPIO_NUM_10,
+    .echo_pin = GPIO_NUM_35
 };
 
 void ultrasonic_setup()
