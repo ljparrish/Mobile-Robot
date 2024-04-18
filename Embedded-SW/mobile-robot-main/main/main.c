@@ -10,8 +10,7 @@
 #include "led_blink.c"
 #include "motor_control.c"
 #include "esp_now.c"
-// #include "ultrasonic_measure.c"
-// TODO: Debug the including ultrasonic sensor code
+#include "ultrasonic_measure.c"
 
 // Define parameters
 #define debug_statements 1
@@ -102,8 +101,6 @@ void vMeasure_Encoders()
 }
 
 // RTOS Task #3 - Measure Ultrasonic Sensors
-// TODO: Fix include errors for ultrasonic.h and ultrasonic.c
-/*
 void vMeasure_Ultrasonic()
 {
     ultrasonic_setup();
@@ -140,7 +137,7 @@ void vMeasure_Ultrasonic()
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
-*/
+
 
 // RTOS Task #4 - Motor PID Control
 void vMotor_PID_Control()
@@ -316,9 +313,9 @@ void app_main(void)
 
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
-    xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
-    xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 10, NULL); 
-    //xTaskCreate(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, NULL);
-    xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
+    // xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
+    // xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 10, NULL); 
+    xTaskCreate(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
+    // xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, NULL);
+    // xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
 }
