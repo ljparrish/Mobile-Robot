@@ -107,32 +107,37 @@ void vMeasure_Ultrasonic()
 
     while (1)
     {
-        float distance1;
-        esp_err_t res1 = ultrasonic_measure(&sensor1, MAX_DISTANCE_CM, &distance1);
+        uint32_t distance1;
+        esp_err_t res1 = ultrasonic_measure_cm(&sensor1, MAX_DISTANCE_CM, &distance1);
         if (res1 != ESP_OK)
             handle_error(res1);
         else
-            printf("Distance1: %0.04f cm\n", distance1 * 100);
+            printf("Distance1: %lu cm\n", distance1);
 
-        float distance2;
-        esp_err_t res2 = ultrasonic_measure(&sensor2, MAX_DISTANCE_CM, &distance2);
+        uint32_t distance2;
+        esp_err_t res2 = ultrasonic_measure_cm(&sensor2, MAX_DISTANCE_CM, &distance2);
         if (res2 != ESP_OK)
             handle_error(res1);
         else
-            printf("Distance2: %0.04f cm\n", distance2 * 100);
+            printf("Distance2: %lu cm\n", distance2);
 
-        float distance3;
-        esp_err_t res3 = ultrasonic_measure(&sensor3, MAX_DISTANCE_CM, &distance3);
+        uint32_t distance3;
+        esp_err_t res3 = ultrasonic_measure_cm(&sensor3, MAX_DISTANCE_CM, &distance3);
         if (res3 != ESP_OK)
             handle_error(res1);
         else
-            printf("Distance3: %0.04f cm\n", distance3 * 100);
+            printf("Distance3: %lu cm\n", distance3);
 
         printf("-----------------\n");
 
-        xQueueSend(ultrasonic_left_queue, (void*)&distance1, 10);
-        xQueueSend(ultrasonic_center_queue, (void*)&distance2, 10);
-        xQueueSend(ultrasonic_right_queue, (void*)&distance3, 10);
+        // Cast to uint_8
+        u_int8_t distance1_tx = (uint8_t)distance1;
+        u_int8_t distance2_tx = (uint8_t)distance2;
+        u_int8_t distance3_tx = (uint8_t)distance3;
+
+        xQueueSend(ultrasonic_left_queue, (void*)&distance1_tx, 10);
+        xQueueSend(ultrasonic_center_queue, (void*)&distance2_tx, 10);
+        xQueueSend(ultrasonic_right_queue, (void*)&distance3_tx, 10);
 
         vTaskDelay(pdMS_TO_TICKS(100));
     }
@@ -258,9 +263,9 @@ void vESP_NOW()
     }
 
     // Setup local variables for info to send over ESP_NOW
-    u_int8_t ultrasonic_left = 0; 
-    u_int8_t ultrasonic_center = 0;
-    u_int8_t ultrasonic_right = 0;
+    uint8_t ultrasonic_left = 0; 
+    uint8_t ultrasonic_center = 0;
+    uint8_t ultrasonic_right = 0;
 
     // TODO: Recieve values from ultrasonic sensor queues and update local vars
 
@@ -273,6 +278,22 @@ void vESP_NOW()
             ESP_LOGI(ESP_NOW_TAG, "X: %f", x);
             ESP_LOGI(ESP_NOW_TAG, "Y: %f", y);
             ESP_LOGI(ESP_NOW_TAG, "T: %f", theta);
+        }
+
+        // If we do not recieve a value from the Queue, we reset the sensor value to zero
+        if(xQueueReceive(ultrasonic_left_queue, (void*)&ultrasonic_left, 0) != pdTRUE)
+        {
+            ultrasonic_left = 0;
+        }
+
+        if(xQueueReceive(ultrasonic_center_queue, (void*)&ultrasonic_center, 0) != pdTRUE)
+        {
+            ultrasonic_center = 0;
+        }
+
+        if(xQueueReceive(ultrasonic_right_queue, (void*)&ultrasonic_right, 0) != pdTRUE)
+        {
+            ultrasonic_right = 0;
         }
 
         // Copy into send structure
@@ -313,9 +334,9 @@ void app_main(void)
 
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
-    // xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
-    // xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 10, NULL); 
+    xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
+    xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 10, NULL); 
     xTaskCreate(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    // xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, NULL);
-    // xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
+    xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, NULL);
+    xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
 }
