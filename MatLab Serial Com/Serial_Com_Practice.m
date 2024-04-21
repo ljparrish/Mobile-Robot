@@ -10,9 +10,9 @@ clc
 % 
 % % write 3 bytes of data to the serial device
 % write(serialdevObj, [88 99 45]);
-% 
-% % read data from the serial device
-% read(serialdevObj, 3)
+
+% read data from the serial device
+read(serialdevObj, 3)
 
 comChannel = serialportlist;
 
@@ -29,4 +29,7 @@ leftWheelPulse = typecast(r(2),'int8');
 count = typecast(r(6),'int8');
 disp(rightWheel)
 disp(leftWheel)
+
+
+
 
