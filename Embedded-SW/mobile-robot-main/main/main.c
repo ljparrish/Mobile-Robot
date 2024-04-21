@@ -16,9 +16,6 @@
 #define debug_statements 1
 
 // Setup any Queues here!
-// Motor Signal Queues
-static QueueHandle_t right_encoder_queue;
-static QueueHandle_t left_encoder_queue;
 
 // Ultrasonic Sensor Data Queues
 static QueueHandle_t ultrasonic_left_queue;
@@ -86,11 +83,11 @@ void vMeasure_Encoders()
         // ESP_LOGI(TAG_MOTOR, "RIGHT: %d", right_current_pulse_cnt);
 
         // Estimate state
-        estimate_state((float) left_current_pulse_cnt, (float) right_current_pulse_cnt);
+        //estimate_state((float) left_current_pulse_cnt, (float) right_current_pulse_cnt);
         
-        ESP_LOGI(TAG_MOTOR, "X: %f", x);
-        ESP_LOGI(TAG_MOTOR, "Y: %f", y);
-        ESP_LOGI(TAG_MOTOR, "T: %f", theta);
+        //ESP_LOGI(TAG_MOTOR, "X: %f", x);
+        //ESP_LOGI(TAG_MOTOR, "Y: %f", y);
+        //ESP_LOGI(TAG_MOTOR, "T: %f", theta);
     
         // Clear the pulse count
         pcnt_unit_clear_count(pcnt_unit_right);
@@ -339,4 +336,5 @@ void app_main(void)
     xTaskCreate(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
     xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, NULL);
     xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
+    //xTaskCreate(vMotor_Ramp, "Open Loop Motor Test", 4096, NULL, 2, NULL);
 }

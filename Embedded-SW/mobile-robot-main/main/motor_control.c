@@ -8,6 +8,7 @@
 #include "driver/pulse_cnt.h"
 #include "bdc_motor.h"
 #include "pid_ctrl.h"
+#include "freertos/queue.h"
 
 #include "include/mobile_robot_pins.h"
 
@@ -29,6 +30,10 @@ pcnt_unit_handle_t pcnt_unit_right = NULL;
 // PID Controller Handles
 pid_ctrl_block_handle_t left_pid_ctrl = NULL;
 pid_ctrl_block_handle_t right_pid_ctrl = NULL;
+
+// Encoder Signal Queues
+static QueueHandle_t right_encoder_queue;
+static QueueHandle_t left_encoder_queue;
 
 // Encoder Configuration
 #define MOTOR_PCNT_HIGH_LIMIT 10000
@@ -213,13 +218,40 @@ void vMotor_Ramp()
     bdc_motor_forward(left_motor);
     bdc_motor_forward(right_motor);
     int count = BDC_MCPWM_DUTY_TICK_MAX - 1;
+
+    int8_t w_l;
+    int8_t w_r;
+    int s_print;
+    // TODO: Add start button here to begin
+
+    // Begin motor open loop test
+    xQueueReset(right_encoder_queue);
+    xQueueReset(left_encoder_queue);
     while (1)
     {
         for (size_t i = 0; i < count; i++)
         {
             bdc_motor_set_speed(left_motor,i);
             bdc_motor_set_speed(right_motor,i);
-            ESP_LOGI(TAG_MOTOR, "Speed = %i", i);
+            // Receives info from queues if available
+            xQueueReceive(right_encoder_queue, (void *) &w_l, pdTICKS_TO_MS(10));
+            xQueueReceive(left_encoder_queue, (void *) &w_r, pdTICKS_TO_MS(10));
+
+            // Print info to the terminal
+            ESP_LOGI(TAG_MOTOR, "S:%d L:%d R:%d",i, w_l, w_r);
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+
+        for (size_t j = count; j > 0; j--)
+        {
+            bdc_motor_set_speed(left_motor,j);
+            bdc_motor_set_speed(right_motor,j);
+            // Receives info from queues if available
+            xQueueReceive(right_encoder_queue, (void *) &w_l, pdTICKS_TO_MS(10));
+            xQueueReceive(left_encoder_queue, (void *) &w_r, pdTICKS_TO_MS(10));
+
+            // Print info to the terminal
+            ESP_LOGI(TAG_MOTOR, "S:%d L:%d R:%d",j, w_l, w_r);
             vTaskDelay(pdMS_TO_TICKS(10));
         }
     }
@@ -231,22 +263,25 @@ void vMotor_Open_Loop()
     bdc_motor_forward(left_motor);
     bdc_motor_forward(right_motor);
     int count = BDC_MCPWM_DUTY_TICK_MAX - 1;
-    float profile[] = {0.0, 0.7, 0.5, -0.2, 0.4, 1.0, -0.4, 0.2, -0.7, -1.0, -0.3, 0.8, 0.0};
+    //float profile[] = {0.0, 0.7, 0.5, -0.2, 0.4, 1.0, -0.4, 0.2, -0.7, -1.0, -0.3, 0.8, 0.0};
     int interval = 1000;
+    int profile[] = {0, 200, 400, 500, 600, 700, 800, 900, 500, 600, 550, 400, 0, -200, -400, -500, -550, -600, -650, -700, -800, -650, -900, -850, 200, 400, 600, 999, 800, 750, 200, 0, -400, -600, -800, -700, -999, -750 -300, 0};
     u_int32_t signal;
 
     while (1)
     {
-        int w_l;
-        int w_r;
+        int8_t w_l;
+        int8_t w_r;
+        int s_print;
         // TODO: Add start button here to begin
 
         // Begin motor open loop test
         xQueueReset(right_encoder_queue);
         xQueueReset(left_encoder_queue);
-        for (size_t pidx = 0; pidx < sizeof(profile)/sizeof(float); pidx++)
+        for (size_t pidx = 0; pidx < sizeof(profile)/sizeof(int); pidx++)
         {
-            signal = (u_int32_t) profile[pidx] * (BDC_MCPWM_DUTY_TICK_MAX - 1);
+            signal = (u_int32_t) abs(profile[pidx]);
+            s_print = profile[pidx];
             if (profile[pidx] > 0)
             {
                 bdc_motor_forward(left_motor);
@@ -266,7 +301,7 @@ void vMotor_Open_Loop()
                 xQueueReceive(left_encoder_queue, (void *) &w_r, pdTICKS_TO_MS(10));
 
                 // Print info to the terminal
-                ESP_LOGI(TAG_MOTOR, "S:%lu L:%d R:%d",signal, w_l, w_r);
+                ESP_LOGI(TAG_MOTOR, "S:%d L:%d R:%d",s_print, w_l, w_r);
             }
             
         }
