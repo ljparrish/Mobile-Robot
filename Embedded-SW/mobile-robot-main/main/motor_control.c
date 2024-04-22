@@ -59,6 +59,10 @@ int8_t left_motor_pulse_cnt = 0;
 #define BDC_PID_LOOP_PERIOD_MS        10   // calculate the motor speed every 10ms
 #define BDC_PID_EXPECT_SPEED          20  // expected motor speed, in the pulses counted by the rotary encoder
 
+// Motor Parameters for feedforward
+#define A0 580.0
+#define A1 5.88
+
 typedef struct {
     bdc_motor_handle_t motor;
     pcnt_unit_handle_t pcnt_encoder;
@@ -175,6 +179,16 @@ void estimate_state(float encoder_left, float encoder_right) {
     x += d * cos(theta+delta_theta/2);
     y += d * sin(theta+delta_theta/2);
     theta += delta_theta;
+}
+
+void compute_feedforward(int8_t cmd_vel, float* u)
+{
+    if (cmd_vel > 0)
+    {
+        *u += A0 + cmd_vel*A1;
+    } else {
+        *u += -A0 + cmd_vel*A1; 
+    }
 }
 
 void vMotor_Routine()

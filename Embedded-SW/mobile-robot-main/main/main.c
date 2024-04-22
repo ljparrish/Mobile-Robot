@@ -197,6 +197,7 @@ void vMotor_PID_Control()
             bdc_motor_reverse(left_motor);
             left_speed = -left_speed;
         }
+        compute_feedforward(cmd.w_left_cmd, &left_speed);
 
         // Calculate Right Wheel Error and PID output
         float right_error = cmd.w_right_cmd - right_motor_pulse_cnt;
@@ -209,6 +210,7 @@ void vMotor_PID_Control()
             bdc_motor_reverse(right_motor);
             right_speed = -right_speed;
         }
+        compute_feedforward(cmd.w_right_cmd, &right_speed);
 
         // Apply Inputs
         bdc_motor_set_speed(right_motor, (uint32_t)right_speed);
