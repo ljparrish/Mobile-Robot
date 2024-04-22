@@ -52,7 +52,7 @@ insertRay(map,pose,scan,maxrange); % updates occupancy grid
 show(map)
 hold on
 
-
+A = [];
 % for testing, step through the big array Ellie will send from a continuous
 % scan
 
