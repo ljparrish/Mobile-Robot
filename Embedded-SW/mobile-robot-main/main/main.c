@@ -16,6 +16,10 @@
 #define debug_statements 1
 
 // Setup any Queues here!
+// Odometry Queues
+static QueueHandle_t x_position_queue;
+static QueueHandle_t y_position_queue;
+static QueueHandle_t theta_queue;
 
 // Ultrasonic Sensor Data Queues
 static QueueHandle_t ultrasonic_left_queue;
@@ -83,7 +87,7 @@ void vMeasure_Encoders()
         // ESP_LOGI(TAG_MOTOR, "RIGHT: %d", right_current_pulse_cnt);
 
         // Estimate state
-        //estimate_state((float) left_current_pulse_cnt, (float) right_current_pulse_cnt);
+        estimate_state((float) left_current_pulse_cnt, (float) right_current_pulse_cnt);
         
         //ESP_LOGI(TAG_MOTOR, "X: %f", x);
         //ESP_LOGI(TAG_MOTOR, "Y: %f", y);
@@ -177,7 +181,10 @@ void vMotor_PID_Control()
         // Receives info from queues if available
         xQueueReceive(right_encoder_queue, (void *) &right_motor_pulse_cnt, 0);
         xQueueReceive(left_encoder_queue, (void *) &left_motor_pulse_cnt, 0);
-        xQueueReceive(robot_cmd_queue, (void *)&cmd, 0);
+
+        if(xQueueReceive(robot_cmd_queue, (void *)&cmd, 0) != pdTRUE) {
+            
+        }
         
 
         if(debug_statements)
@@ -190,6 +197,7 @@ void vMotor_PID_Control()
         float left_error = cmd.w_left_cmd - left_motor_pulse_cnt;
         float left_speed = 0;
         pid_compute(left_pid_ctrl, left_error, &left_speed);
+        left_speed += compute_feedforward(cmd.w_left_cmd);
         if(left_speed > 0)
         {
             bdc_motor_forward(left_motor);
@@ -197,12 +205,12 @@ void vMotor_PID_Control()
             bdc_motor_reverse(left_motor);
             left_speed = -left_speed;
         }
-        compute_feedforward(cmd.w_left_cmd, &left_speed);
 
         // Calculate Right Wheel Error and PID output
         float right_error = cmd.w_right_cmd - right_motor_pulse_cnt;
         float right_speed = 0;
         pid_compute(right_pid_ctrl, right_error, &right_speed);
+        right_speed += compute_feedforward(cmd.w_right_cmd);
         if(right_speed > 0)
         {
             bdc_motor_forward(right_motor);
@@ -210,7 +218,6 @@ void vMotor_PID_Control()
             bdc_motor_reverse(right_motor);
             right_speed = -right_speed;
         }
-        compute_feedforward(cmd.w_right_cmd, &right_speed);
 
         // Apply Inputs
         bdc_motor_set_speed(right_motor, (uint32_t)right_speed);
@@ -262,11 +269,13 @@ void vESP_NOW()
     }
 
     // Setup local variables for info to send over ESP_NOW
+    int x_tx = 1000*x;
+    int y_tx = 1000*y;
+    int theta_tx = 1000*theta;
+
     uint8_t ultrasonic_left = 0; 
     uint8_t ultrasonic_center = 0;
     uint8_t ultrasonic_right = 0;
-
-    // TODO: Recieve values from ultrasonic sensor queues and update local vars
 
     u_int8_t counter = 0;
     while (1)
@@ -296,6 +305,9 @@ void vESP_NOW()
         }
 
         // Copy into send structure
+        memcpy(&state_data.x_position, &x_tx, sizeof(x_tx));
+        memcpy(&state_data.y_position, &y_tx, sizeof(y_tx));
+        memcpy(&state_data.theta, &theta_tx, sizeof(theta_tx));
         memcpy(&state_data.w_left, &left_motor_pulse_cnt, sizeof(left_motor_pulse_cnt));
         memcpy(&state_data.w_right, &right_motor_pulse_cnt, sizeof(right_motor_pulse_cnt));
         memcpy(&state_data.ultrasonic_left, &ultrasonic_left, sizeof(ultrasonic_left));
@@ -322,6 +334,10 @@ void app_main(void)
     
     // Create Queues using xQueueCreate:
     // Parameters: | Number of values that can be stored in a queue | size in bytes of each variable the queue takes |
+    x_position_queue = xQueueCreate(5, sizeof(int));
+    y_position_queue = xQueueCreate(5, sizeof(int));
+    theta_queue = xQueueCreate(5, sizeof(int));
+
     right_encoder_queue = xQueueCreate(5, sizeof(int8_t));
     left_encoder_queue = xQueueCreate(5, sizeof(int8_t));
 

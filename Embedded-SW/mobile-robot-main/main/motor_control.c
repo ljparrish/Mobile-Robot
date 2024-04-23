@@ -181,14 +181,18 @@ void estimate_state(float encoder_left, float encoder_right) {
     theta += delta_theta;
 }
 
-void compute_feedforward(int8_t cmd_vel, float* u)
+float compute_feedforward(int8_t cmd_vel)
 {
+    float u = 0;
     if (cmd_vel > 0)
     {
-        *u += A0 + cmd_vel*A1;
-    } else {
-        *u += -A0 + cmd_vel*A1; 
+        u = A0 + (float)cmd_vel*A1;
+    } 
+    if (cmd_vel < 0)
+    {
+        u = -A0 + (float)cmd_vel*A1; 
     }
+    return u;
 }
 
 void vMotor_Routine()
