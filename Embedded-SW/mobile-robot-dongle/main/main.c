@@ -79,13 +79,12 @@ void vESP_NOW()
     mobile_robot_command_t cmd;
     while (1)
     {
-        // Check to see if we have a command signal to be sent to the robot in the queue
-        if (xQueueReceive(robot_cmd_queue, (void*)&cmd, 0) == pdTRUE)
-        {
-            // Send the data from the queue
-            esp_now_send(s_mobile_robot_address, (u_int8_t *)&cmd, sizeof(cmd));
-        }
-
+        // Receive cmd
+        xQueueReceive(robot_cmd_queue, (void*)&cmd, 0);
+        
+        // Send cmd
+        esp_now_send(s_mobile_robot_address, (u_int8_t *)&cmd, sizeof(cmd));
+        
         // Task Delay
         vTaskDelay(pdMS_TO_TICKS(ESP_NOW_RATE));
     }
