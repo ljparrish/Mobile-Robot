@@ -276,9 +276,9 @@ void vESP_NOW()
     }
 
     // Setup local variables for info to send over ESP_NOW
-    int x_tx = 1000*x;
-    int y_tx = 1000*y;
-    int theta_tx = 1000*theta;
+    int x_tx; 
+    int y_tx; 
+    int theta_tx;
 
     uint8_t ultrasonic_left = 0; 
     uint8_t ultrasonic_center = 0;
@@ -287,13 +287,24 @@ void vESP_NOW()
     u_int8_t counter = 0;
     while (1)
     {
+        // Update Odometry
+        x_tx = (int) 1000*x;
+        y_tx = (int) 1000*y;
+        theta_tx = (int) 1000*theta;
+
         if (debug_statements)
         {
            // Debug
             ESP_LOGI(ESP_NOW_TAG, "X: %f", x);
             ESP_LOGI(ESP_NOW_TAG, "Y: %f", y);
             ESP_LOGI(ESP_NOW_TAG, "T: %f", theta);
+            ESP_LOGI(ESP_NOW_TAG, "X: %d", x_tx);
+            ESP_LOGI(ESP_NOW_TAG, "Y: %d", y_tx);
+            ESP_LOGI(ESP_NOW_TAG, "T: %d", theta_tx);
         }
+
+        
+
 
         // If we do not recieve a value from the Queue, we reset the sensor value to zero
         if(xQueueReceive(ultrasonic_left_queue, (void*)&ultrasonic_left, 0) != pdTRUE)
