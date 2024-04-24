@@ -28,9 +28,9 @@ static void data_recieve_cb(const uint8_t *mac_address, uint8_t *incomingData, i
     if(debug_statements)
     {
         ESP_LOGI(ESP_NOW_TAG,"Data recieved:");
-        ESP_LOGI(ESP_NOW_TAG,"x   : %i", state_data.w_right);
-        ESP_LOGI(ESP_NOW_TAG,"y   : %i", state_data.w_right);
-        ESP_LOGI(ESP_NOW_TAG,"T   : %i", state_data.w_right);
+        ESP_LOGI(ESP_NOW_TAG,"x   : %i", state_data.x_position);
+        ESP_LOGI(ESP_NOW_TAG,"y   : %i", state_data.y_position);
+        ESP_LOGI(ESP_NOW_TAG,"T   : %i", state_data.theta);
         ESP_LOGI(ESP_NOW_TAG,"w_r : %d", state_data.w_right);
         ESP_LOGI(ESP_NOW_TAG,"w_l : %d", state_data.w_left);
         ESP_LOGI(ESP_NOW_TAG,"u_l : %d", state_data.ultrasonic_left);

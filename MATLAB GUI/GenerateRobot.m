@@ -4,7 +4,6 @@ function [newXCar, newYCar] = GenerateRobot(x_car, y_car, l_car, w_car, angle)
 
 %Defines rotation matrix that accepts angle input
 rotationMatrix = [cos(angle), -sin(angle) ; sin(angle), cos(angle)];
-disp(rotationMatrix)
 %Defines the rectangle the origin which we will use to calculate new
 %rotated points
 baseXCar = [(0 - (l_car/2)), (0 + (l_car/2)), (0 + (l_car/2)), (0 - (l_car/2))];
@@ -15,7 +14,6 @@ baseYCar = [(0 - (w_car/2)), (0 - (w_car/2)), (0 + (w_car/2)), (0 + (w_car/2))];
 %Uses the origin rectangle and separates the x and y components into column
 %vector
 basePoint1 = [baseXCar(1); baseYCar(1)];
-disp(basePoint1)
 basePoint2 = [baseXCar(2); baseYCar(2)];
 basePoint3 = [baseXCar(3); baseYCar(3)];
 basePoint4 = [baseXCar(4); baseYCar(4)];
