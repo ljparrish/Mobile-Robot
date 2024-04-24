@@ -47,8 +47,8 @@ static QueueHandle_t left_encoder_queue;
 #define SCALING_FACTOR_TRANSLATION 1.85
 #define SCALING_FACTOR_ROTATION 1.66
 
-float x = 0.0;
-float y = 0.0;
+float x = 1.0;
+float y = 2.5;
 float theta = 0.0;
 
 // Initialize Measured Pulse counts
