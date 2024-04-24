@@ -175,24 +175,31 @@ void vMotor_PID_Control()
 
     // Initialize Motor Setpoints
     mobile_robot_command_t cmd = {0};
+    int notReceived = 0;
 
     while (1)
     {
+
         // Receives info from queues if available
         xQueueReceive(right_encoder_queue, (void *) &right_motor_pulse_cnt, 0);
         xQueueReceive(left_encoder_queue, (void *) &left_motor_pulse_cnt, 0);
 
-        if(xQueueReceive(robot_cmd_queue, (void *)&cmd, 0) != pdTRUE) {
-            
+        if (xQueueReceive(robot_cmd_queue, (void *)&cmd, 0) != pdTRUE) {
+            notReceived += 1;
+            if (notReceived > 10) {
+                ESP_LOGI(TAG_MOTOR, "Queue hasn't received anything for %d times, stop the robot!", notReceived);
+                cmd.w_left_cmd = 0;
+                cmd.w_right_cmd = 0;
+            }
+        } else {
+           notReceived = 0; 
         }
-        
 
-        if(debug_statements)
-        {
+        if(debug_statements) {
             ESP_LOGI(TAG_MOTOR, "L_cmd: %d R_cmd: %d",cmd.w_left_cmd, cmd.w_right_cmd);
             ESP_LOGI(TAG_MOTOR, "    L: %d     R: %d", left_motor_pulse_cnt, right_motor_pulse_cnt);
-        }
-        
+        } 
+                        
         // Calculate Left Wheel Error and PID output
         float left_error = cmd.w_left_cmd - left_motor_pulse_cnt;
         float left_speed = 0;
@@ -218,7 +225,7 @@ void vMotor_PID_Control()
             bdc_motor_reverse(right_motor);
             right_speed = -right_speed;
         }
-
+    
         // Apply Inputs
         bdc_motor_set_speed(right_motor, (uint32_t)right_speed);
         bdc_motor_set_speed(left_motor, (uint32_t)left_speed);
