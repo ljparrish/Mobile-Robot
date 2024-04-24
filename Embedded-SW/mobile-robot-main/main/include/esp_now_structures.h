@@ -6,11 +6,11 @@ For using the ESPNOW protocol define the datastructures to be leveraged here
 
 typedef struct 
 {
-    int x_position;
-    int y_position;
-    int theta;
-    int8_t w_right;               // Right motor angular velocity in pulses per second
-    int8_t w_left;                // Left motor angular velocity in pulses per second
+    int x_position;                 // Integer Position of robot in X measured in mm
+    int y_position;                 // Integer Position of robot in Y measured in mm
+    int theta;                      // Integer Heading of robot  measured in mRad
+    int8_t w_right;                 // Right motor angular velocity in pulses per second
+    int8_t w_left;                  // Left motor angular velocity in pulses per second
     u_int8_t ultrasonic_left;       // Left ultrasonic sensor distance value in centimeters
     u_int8_t ultrasonic_center;     // Center ultrasonic sensor distance value in centimeters
     u_int8_t ultrasonic_right;      // Right ultrasonic sensor distance value in centimeters
