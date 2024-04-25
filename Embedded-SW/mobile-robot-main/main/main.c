@@ -140,7 +140,7 @@ void vMeasure_Ultrasonic()
         xQueueSend(ultrasonic_center_queue, (void*)&distance2_tx, 10);
         xQueueSend(ultrasonic_right_queue, (void*)&distance3_tx, 10);
 
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
