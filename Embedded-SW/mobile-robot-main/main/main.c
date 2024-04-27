@@ -118,14 +118,14 @@ void vMeasure_Ultrasonic()
         uint32_t distance2;
         esp_err_t res2 = ultrasonic_measure_cm(&sensor2, MAX_DISTANCE_CM, &distance2);
         if (res2 != ESP_OK)
-            handle_error(res1);
+            handle_error(res2);
         else
             printf("Distance2: %lu cm\n", distance2);
 
         uint32_t distance3;
         esp_err_t res3 = ultrasonic_measure_cm(&sensor3, MAX_DISTANCE_CM, &distance3);
         if (res3 != ESP_OK)
-            handle_error(res1);
+            handle_error(res3);
         else
             printf("Distance3: %lu cm\n", distance3);
 

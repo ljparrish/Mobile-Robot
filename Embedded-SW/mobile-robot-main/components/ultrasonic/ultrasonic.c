@@ -111,7 +111,7 @@ esp_err_t ultrasonic_measure_raw(const ultrasonic_sensor_t *dev, uint32_t max_ti
     {
         time = esp_timer_get_time();
         if (timeout_expired(echo_start, max_time_us))
-            RETURN_CRITICAL(ESP_ERR_ULTRASONIC_ECHO_TIMEOUT);
+            *time_us = max_time_us;
     }
     PORT_EXIT_CRITICAL;
 
