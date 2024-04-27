@@ -44,7 +44,7 @@ static QueueHandle_t left_encoder_queue;
 #define WHEEL_BASE 0.2
 #define WHEEL_DIAMETER 0.06
 #define TICKS_PER_REVOLUTION 1120
-#define SCALING_FACTOR_TRANSLATION 1.00
+#define SCALING_FACTOR_TRANSLATION 1.25
 #define SCALING_FACTOR_ROTATION 1.00
 
 float x = 1.0;

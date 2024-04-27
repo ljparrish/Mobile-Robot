@@ -155,9 +155,9 @@ void vMotor_PID_Control()
 
     // Sets up PID controller parameters
     pid_ctrl_parameter_t pid_parameters = {
-        .kp = 3.6,
-        .ki = 0.1,
-        .kd = 0.0,
+        .kp = 10.0,
+        .ki = 0.0,
+        .kd = 0.3,
         .cal_type = PID_CAL_TYPE_INCREMENTAL,
         .max_output = BDC_MCPWM_DUTY_TICK_MAX - 1,
         .min_output = -(BDC_MCPWM_DUTY_TICK_MAX - 1),
