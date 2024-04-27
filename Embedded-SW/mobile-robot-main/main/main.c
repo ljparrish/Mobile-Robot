@@ -118,14 +118,14 @@ void vMeasure_Ultrasonic()
         uint32_t distance2;
         esp_err_t res2 = ultrasonic_measure_cm(&sensor2, MAX_DISTANCE_CM, &distance2);
         if (res2 != ESP_OK)
-            handle_error(res2);
+            handle_error(res1);
         else
             printf("Distance2: %lu cm\n", distance2);
 
         uint32_t distance3;
         esp_err_t res3 = ultrasonic_measure_cm(&sensor3, MAX_DISTANCE_CM, &distance3);
         if (res3 != ESP_OK)
-            handle_error(res3);
+            handle_error(res1);
         else
             printf("Distance3: %lu cm\n", distance3);
 
@@ -158,7 +158,7 @@ void vMotor_PID_Control()
         .kp = 10.0,
         .ki = 0.0,
         .kd = 0.3,
-        .cal_type = PID_CAL_TYPE_INCREMENTAL,
+        .cal_type = PID_CAL_TYPE_POSITIONAL,
         .max_output = BDC_MCPWM_DUTY_TICK_MAX - 1,
         .min_output = -(BDC_MCPWM_DUTY_TICK_MAX - 1),
         .max_integral = 1000,
@@ -205,6 +205,10 @@ void vMotor_PID_Control()
         float left_speed = 0;
         pid_compute(left_pid_ctrl, left_error, &left_speed);
         left_speed += compute_feedforward(cmd.w_left_cmd);
+        if (abs(left_speed) > (BDC_MCPWM_DUTY_TICK_MAX - 1))
+        {
+            left_speed = BDC_MCPWM_DUTY_TICK_MAX - 1;
+        }
         if(left_speed > 0)
         {
             bdc_motor_forward(left_motor);
@@ -218,6 +222,11 @@ void vMotor_PID_Control()
         float right_speed = 0;
         pid_compute(right_pid_ctrl, right_error, &right_speed);
         right_speed += compute_feedforward(cmd.w_right_cmd);
+        if (abs(right_speed) > (BDC_MCPWM_DUTY_TICK_MAX - 1))
+        {
+            right_speed = BDC_MCPWM_DUTY_TICK_MAX - 1;
+        }
+        
         if(right_speed > 0)
         {
             bdc_motor_forward(right_motor);
@@ -225,7 +234,7 @@ void vMotor_PID_Control()
             bdc_motor_reverse(right_motor);
             right_speed = -right_speed;
         }
-    
+        
         // Apply Inputs
         bdc_motor_set_speed(right_motor, (uint32_t)right_speed);
         bdc_motor_set_speed(left_motor, (uint32_t)left_speed);
