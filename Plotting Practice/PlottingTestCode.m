@@ -44,3 +44,14 @@ hold on
 fill(x,d,'b')
 
 legend(["Starting Pose","Planned Pose","Planned Trajectory","Actual Trajectory"])
+
+%% Append matrix
+clear all
+B = [1,2,3,4,5,6,7;1,2,3,4,5,6,7];
+rows = size(B,1);
+columns = size(B,2);
+
+A = zeros(rows,columns);
+empty = [0;0];
+A = [A,empty];
+disp(A)
