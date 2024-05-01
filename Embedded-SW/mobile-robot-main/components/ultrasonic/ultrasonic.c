@@ -46,7 +46,6 @@
 #define TRIGGER_LOW_DELAY 4
 #define TRIGGER_HIGH_DELAY 10
 #define PING_TIMEOUT 6000
-#define ROUNDTRIP_M 5800.0f
 #define ROUNDTRIP_CM 58
 
 #if HELPER_TARGET_IS_ESP32
@@ -64,9 +63,25 @@ static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 #define timeout_expired(start, len) ((esp_timer_get_time() - (start)) >= (len))
 
-#define CHECK_ARG(VAL) do { if (!(VAL)) return ESP_ERR_INVALID_ARG; } while (0)
-#define CHECK(x) do { esp_err_t __; if ((__ = x) != ESP_OK) return __; } while (0)
-#define RETURN_CRITICAL(RES) do { PORT_EXIT_CRITICAL; return RES; } while(0)
+#define CHECK_ARG(VAL)                  \
+    do                                  \
+    {                                   \
+        if (!(VAL))                     \
+            return ESP_ERR_INVALID_ARG; \
+    } while (0)
+#define CHECK(x)                \
+    do                          \
+    {                           \
+        esp_err_t __;           \
+        if ((__ = x) != ESP_OK) \
+            return __;          \
+    } while (0)
+#define RETURN_CRITICAL(RES) \
+    do                       \
+    {                        \
+        PORT_EXIT_CRITICAL;  \
+        return RES;          \
+    } while (0)
 
 esp_err_t ultrasonic_init(const ultrasonic_sensor_t *dev)
 {
@@ -77,7 +92,6 @@ esp_err_t ultrasonic_init(const ultrasonic_sensor_t *dev)
 
     return gpio_set_level(dev->trigger_pin, 0);
 }
-
 
 esp_err_t ultrasonic_measure_raw(const ultrasonic_sensor_t *dev, uint32_t max_time_us, uint32_t *time_us)
 {
@@ -111,23 +125,14 @@ esp_err_t ultrasonic_measure_raw(const ultrasonic_sensor_t *dev, uint32_t max_ti
     {
         time = esp_timer_get_time();
         if (timeout_expired(echo_start, max_time_us))
+        {
             *time_us = max_time_us;
+            PORT_EXIT_CRITICAL;
+            return ESP_OK;
+        }
     }
     PORT_EXIT_CRITICAL;
-
     *time_us = time - echo_start;
-
-    return ESP_OK;
-}
-
-esp_err_t ultrasonic_measure(const ultrasonic_sensor_t *dev, float max_distance, float *distance)
-{
-    CHECK_ARG(dev && distance);
-
-    uint32_t time_us;
-    CHECK(ultrasonic_measure_raw(dev, max_distance * ROUNDTRIP_M, &time_us));
-    *distance = time_us / ROUNDTRIP_M;
-
     return ESP_OK;
 }
 
@@ -137,7 +142,18 @@ esp_err_t ultrasonic_measure_cm(const ultrasonic_sensor_t *dev, uint32_t max_dis
 
     uint32_t time_us;
     CHECK(ultrasonic_measure_raw(dev, max_distance * ROUNDTRIP_CM, &time_us));
-    *distance = time_us / ROUNDTRIP_CM;
 
+    // Calculate distance in centimeters
+    uint32_t dist_cm = time_us / ROUNDTRIP_CM;
+
+    // Check if distance exceeds 255, if so, cap it at 255
+    if (dist_cm > 255)
+    {
+        *distance = 255;
+    }
+    else
+    {
+        *distance = dist_cm;
+    }
     return ESP_OK;
 }
