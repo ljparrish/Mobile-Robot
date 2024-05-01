@@ -49,7 +49,7 @@ static void data_recieve_cb(const uint8_t *mac_address, uint8_t *incomingData, i
     // Send to motor command queue
     xQueueSend(robot_cmd_queue, (void *)&robot_cmd, 5);
 
-    if (debug_statements)
+    if (0)
     {
         ESP_LOGI(ESP_NOW_TAG, "Data recieved:");
         ESP_LOGI(ESP_NOW_TAG, "w_r : %i", robot_cmd.w_right_cmd);
@@ -150,7 +150,7 @@ void vMeasure_Ultrasonic()
         xQueueSend(ultrasonic_center_queue, (void *)&distance2_tx, 10);
         xQueueSend(ultrasonic_right_queue, (void *)&distance3_tx, 10);
 
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
@@ -321,7 +321,7 @@ void vESP_NOW()
         y_tx = (int)1000 * y;
         theta_tx = (int)1000 * theta;
 
-        if (debug_statements)
+        if (0)
         {
             // Debug
             ESP_LOGI(ESP_NOW_TAG, "X: %f", x);
@@ -362,7 +362,7 @@ void vESP_NOW()
         // Send the Data
         esp_now_send(s_usb_dongle_address, (u_int8_t *)&state_data, sizeof(state_data));
         counter++;
-        ESP_LOGI(ESP_NOW_TAG, "Counter Value = %i", counter);
+        // ESP_LOGI(ESP_NOW_TAG, "Counter Value = %i", counter);
         vTaskDelay(pdMS_TO_TICKS(ESP_NOW_RATE));
     }
 }
@@ -411,7 +411,7 @@ void app_main(void)
     ultrasonic_center_queue = xQueueCreate(5, sizeof(u_int8_t));
     ultrasonic_right_queue = xQueueCreate(5, sizeof(u_int8_t));
 
-    robot_cmd_queue = xQueueCreate(30, sizeof(mobile_robot_command_t));
+    robot_cmd_queue = xQueueCreate(300, sizeof(mobile_robot_command_t));
 
     // Initialize Encoder PCNTs
     encoder_setup();
