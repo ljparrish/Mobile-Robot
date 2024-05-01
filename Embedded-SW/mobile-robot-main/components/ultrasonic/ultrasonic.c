@@ -142,6 +142,18 @@ esp_err_t ultrasonic_measure_cm(const ultrasonic_sensor_t *dev, uint32_t max_dis
 
     uint32_t time_us;
     CHECK(ultrasonic_measure_raw(dev, max_distance * ROUNDTRIP_CM, &time_us));
-    *distance = time_us / ROUNDTRIP_CM;
+
+    // Calculate distance in centimeters
+    uint32_t dist_cm = time_us / ROUNDTRIP_CM;
+
+    // Check if distance exceeds 255, if so, cap it at 255
+    if (dist_cm > 255)
+    {
+        *distance = 255;
+    }
+    else
+    {
+        *distance = dist_cm;
+    }
     return ESP_OK;
 }
