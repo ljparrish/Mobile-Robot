@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #include "sdkconfig.h"
 #include "freertos/queue.h"
+#include "esp_timer.h"
 
 // Include source files for Mobile Robot here!
 #include "led_blink.c"
@@ -28,6 +29,16 @@ static QueueHandle_t ultrasonic_right_queue;
 
 // Motor Command Queue
 static QueueHandle_t robot_cmd_queue;
+
+// Task Handles
+static TaskHandle_t PID_compute_task_handle;
+
+// Global Vars for Motor Speeds and Pulse Counts
+float right_speed;
+float left_speed;
+
+int right_current_pulse_cnt;
+int left_current_pulse_cnt;
 
 // ESP NOW Data Recieved Callback Function
 static void data_recieve_cb(const uint8_t *mac_address, uint8_t *incomingData, int length)
@@ -175,6 +186,8 @@ void vMotor_PID_Control()
     mobile_robot_command_t cmd = {0};
     int notReceived = 0;
 
+    vTaskSuspend(NULL);
+
     while (1)
     {
 
@@ -182,8 +195,10 @@ void vMotor_PID_Control()
         xQueueReceive(right_encoder_queue, (void *)&right_motor_pulse_cnt, 0);
         xQueueReceive(left_encoder_queue, (void *)&left_motor_pulse_cnt, 0);
 
-        if (xQueueReceive(robot_cmd_queue, (void *)&cmd, 0) != pdTRUE)
-        {
+        estimate_state((float) left_motor_pulse_cnt, (float) right_motor_pulse_cnt);
+
+        if (xQueueReceive(robot_cmd_queue, (void *)&cmd, 0) != pdTRUE) {
+
             notReceived += 1;
             if (notReceived > 10)
             {
@@ -205,7 +220,7 @@ void vMotor_PID_Control()
 
         // Calculate Left Wheel Error and PID output
         float left_error = cmd.w_left_cmd - left_motor_pulse_cnt;
-        float left_speed = 0;
+        left_speed = 0;
         pid_compute(left_pid_ctrl, left_error, &left_speed);
         left_speed += compute_feedforward(cmd.w_left_cmd);
         if (abs(left_speed) > (BDC_MCPWM_DUTY_TICK_MAX - 1))
@@ -224,7 +239,7 @@ void vMotor_PID_Control()
 
         // Calculate Right Wheel Error and PID output
         float right_error = cmd.w_right_cmd - right_motor_pulse_cnt;
-        float right_speed = 0;
+        right_speed = 0;
         pid_compute(right_pid_ctrl, right_error, &right_speed);
         right_speed += compute_feedforward(cmd.w_right_cmd);
         if (abs(right_speed) > (BDC_MCPWM_DUTY_TICK_MAX - 1))
@@ -242,11 +257,8 @@ void vMotor_PID_Control()
             right_speed = -right_speed;
         }
 
-        // Apply Inputs
-        bdc_motor_set_speed(right_motor, (uint32_t)right_speed);
-        bdc_motor_set_speed(left_motor, (uint32_t)left_speed);
-
-        vTaskDelay(pdMS_TO_TICKS(10));
+        // Block the Task until the ISR re-enables it
+        vTaskSuspend(NULL);
     }
 }
 
@@ -355,6 +367,29 @@ void vESP_NOW()
     }
 }
 
+// PID and Encoder ISR Callback Function
+void motor_timer_cb(void *param)
+{
+    // Apply Inputs
+    bdc_motor_set_speed(right_motor, (uint32_t)right_speed);
+    bdc_motor_set_speed(left_motor, (uint32_t)left_speed);
+
+    // Read Encoder Signals
+    pcnt_unit_get_count(pcnt_unit_right, &right_current_pulse_cnt);
+    pcnt_unit_get_count(pcnt_unit_left, &left_current_pulse_cnt);
+
+    // Send measured values to the respective Queues
+    xQueueSendToBackFromISR(right_encoder_queue, (void*)&right_current_pulse_cnt, pdFALSE);
+    xQueueSendToBackFromISR(left_encoder_queue, (void*)&left_current_pulse_cnt, pdFALSE);
+
+    // Clear the pulse count
+    pcnt_unit_clear_count(pcnt_unit_right);
+    pcnt_unit_clear_count(pcnt_unit_left);
+
+    // Unblock PID and Odom Compute
+    xTaskResumeFromISR(PID_compute_task_handle);
+}
+
 // Main function entry point here:
 void app_main(void)
 {
@@ -376,14 +411,29 @@ void app_main(void)
     ultrasonic_center_queue = xQueueCreate(5, sizeof(u_int8_t));
     ultrasonic_right_queue = xQueueCreate(5, sizeof(u_int8_t));
 
-    robot_cmd_queue = xQueueCreate(10, sizeof(mobile_robot_command_t));
+    robot_cmd_queue = xQueueCreate(30, sizeof(mobile_robot_command_t));
+
+    // Initialize Encoder PCNTs
+    encoder_setup();
+
+    // Setup Motor Actuation and Encoder Measurement Timer and CB Function
+    const esp_timer_create_args_t motor_ctrl_timer_args = {
+        .callback = &motor_timer_cb,
+        .name = "Motor Control Timer"
+    };
+    esp_timer_handle_t motor_timer_handle;
+    
 
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
-    xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
-    xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 10, NULL);
-    xTaskCreate(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, NULL);
-    xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
-    // xTaskCreate(vMotor_Ramp, "Open Loop Motor Test", 4096, NULL, 2, NULL);
+    xTaskCreatePinnedToCore(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL, 0);
+    //xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 10, NULL); 
+    xTaskCreatePinnedToCore(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL, 0);
+    xTaskCreatePinnedToCore(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, &PID_compute_task_handle, 0);
+    xTaskCreatePinnedToCore(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL, 1);
+    //xTaskCreate(vMotor_Ramp, "Open Loop Motor Test", 4096, NULL, 2, NULL);
+
+    ESP_ERROR_CHECK(esp_timer_create(&motor_ctrl_timer_args, &motor_timer_handle));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(motor_timer_handle, 10000));
+
 }
