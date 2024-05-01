@@ -60,7 +60,7 @@ int8_t left_motor_pulse_cnt = 0;
 #define BDC_PID_EXPECT_SPEED          20  // expected motor speed, in the pulses counted by the rotary encoder
 
 // Motor Parameters for feedforward
-#define A0 580.0
+#define A0 700.0
 #define A1 5.88
 
 typedef struct {
