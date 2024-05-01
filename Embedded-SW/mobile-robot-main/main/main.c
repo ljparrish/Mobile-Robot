@@ -422,11 +422,11 @@ void app_main(void)
 
     // Create RTOS Tasks here using xTaskCreate:
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
-    xTaskCreate(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL);
+    xTaskCreatePinnedToCore(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL, 0);
     //xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 10, NULL); 
-    xTaskCreate(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    xTaskCreate(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, &PID_compute_task_handle);
-    xTaskCreate(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL);
+    xTaskCreatePinnedToCore(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL, 0);
+    xTaskCreatePinnedToCore(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, &PID_compute_task_handle, 0);
+    xTaskCreatePinnedToCore(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL, 1);
     //xTaskCreate(vMotor_Ramp, "Open Loop Motor Test", 4096, NULL, 2, NULL);
 
     ESP_ERROR_CHECK(esp_timer_create(&motor_ctrl_timer_args, &motor_timer_handle));
