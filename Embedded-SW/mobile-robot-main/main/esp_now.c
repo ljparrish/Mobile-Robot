@@ -18,7 +18,7 @@
 #include "include/esp_now_structures.h"
 
 #define ESPNOW_MAXDELAY 5120
-#define ESP_NOW_RATE 1000
+#define ESP_NOW_RATE 100
 
 static const char *ESP_NOW_TAG = "ESP_NOW";
 
