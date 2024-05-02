@@ -150,7 +150,7 @@ void vMeasure_Ultrasonic()
         xQueueSend(ultrasonic_center_queue, (void *)&distance2_tx, 10);
         xQueueSend(ultrasonic_right_queue, (void *)&distance3_tx, 10);
 
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
@@ -428,9 +428,9 @@ void app_main(void)
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
     xTaskCreatePinnedToCore(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL, 0);
     //xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 10, NULL); 
-    xTaskCreatePinnedToCore(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL, 0);
+    xTaskCreatePinnedToCore(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 2, NULL, 0);
     xTaskCreatePinnedToCore(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, &PID_compute_task_handle, 0);
-    xTaskCreatePinnedToCore(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 2, NULL, 1);
+    xTaskCreatePinnedToCore(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 3, NULL, 1);
     //xTaskCreate(vMotor_Ramp, "Open Loop Motor Test", 4096, NULL, 2, NULL);
 
     ESP_ERROR_CHECK(esp_timer_create(&motor_ctrl_timer_args, &motor_timer_handle));
