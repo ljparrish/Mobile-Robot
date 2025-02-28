@@ -14,6 +14,8 @@ import datetime
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.transforms as tf
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class MobileRobotGUIApp:
@@ -25,8 +27,8 @@ class MobileRobotGUIApp:
 
         # Setup Frames
         # Occupancy Grid Frame
-        self.Occupancy_Grid_Frame = tk.Frame(self.master, width=500, height=500, relief="ridge", bd=5)
-        self.Occupancy_Grid_Frame.grid(row=0, column=0, padx=5, pady=5, sticky="nesw")
+        self.Robot_Env_Frame = tk.Frame(self.master, width=500, height=500, relief="ridge", bd=5)
+        self.Robot_Env_Frame.grid(row=0, column=0, padx=5, pady=5, sticky="nesw")
 
         # Serial Connection Frame
         self.Serial_Com_Frame = tk.Frame(self.master, width=500, height=300, relief="ridge", bd=5)
@@ -40,14 +42,12 @@ class MobileRobotGUIApp:
         self.Time_Plots_Frame = tk.Frame(self.master, width=500, height=500, relief="ridge", bd=5)
         self.Time_Plots_Frame.grid(row=0, column=1, pady=5, sticky="nesw")
 
-
-        
-
         self.robot = MobileRobot()
 
         self.create_serial_widgets()
         self.create_control_widgets()
         self.create_timeseries_plot_widgets()
+        self.create_robot_env_plot_widgets()
 
         # Flag to indicate if the serial connection is active
         self.connection_active = False
@@ -105,6 +105,17 @@ class MobileRobotGUIApp:
         self.t_position_data = list()
         self.plot_time = list()
 
+    def create_robot_env_plot_widgets(self):
+        self.robot_env_figure, self.robot_env_ax = plt.subplots()
+
+        self.robot_env_canvas = FigureCanvasTkAgg(self.robot_env_figure, master=self.Robot_Env_Frame)
+        self.robot_env_canvas.get_tk_widget().grid(row=0, column=0, padx=5, pady=5, sticky="nesw")
+        self.robot_env_ax.set_xbound(-5, 5)
+        self.robot_env_ax.set_ybound(-5, 5)
+        self.robot_env_ax.grid(True)
+
+        self.robot_body_polygon = patches.Rectangle((self.robot.x_position - self.robot.width/2, self.robot.y_position - self.robot.width/2), self.robot.width, self.robot.width, angle=np.rad2deg(self.robot.theta), rotation_point='center' ,facecolor='red', edgecolor='black', alpha=0.7)
+        self.robot_env_ax.add_patch(self.robot_body_polygon)
     
     def update_plots(self):
         while self.connection_active:
@@ -114,9 +125,41 @@ class MobileRobotGUIApp:
                 self.plot_ax[2].plot(self.plot_time, self.t_position_data, color='y')
                 self.plot1_canvas.draw()
 
-                time.sleep(0.5)
+                time.sleep(0.05)
             except Exception as e:
                 print(f"Error Plotting Graphs: {str(e)}\n")
+
+    def robot_env_plot_update(self):
+        while self.connection_active:
+            try:
+                self.robot_body_polygon.set_xy((self.robot.x_position - self.robot.width/2, self.robot.y_position - self.robot.width/2))
+                self.robot_body_polygon.set_angle(np.rad2deg(self.robot.theta))
+                    
+                dx = 0.2*np.cos(self.robot.theta)
+                dy = 0.2*np.sin(self.robot.theta)
+                self.robot_pointer = patches.Arrow(self.robot.x_position, self.robot.y_position, dx, dy, color="black",width=0.1)
+                self.robot_env_ax.add_patch(self.robot_pointer)
+                
+                self.robot_env_canvas.draw()
+                time.sleep(0.1)
+
+            except Exception as e:
+                print(f"Error UpdatingRobot Env Graphs: {str(e)}\n")
+
+    def clear_plots(self):
+        self.plot_time.clear()
+        self.x_position_data.clear()
+        self.y_position_data.clear()
+        self.t_position_data.clear()
+
+        self.plot_ax[0].cla()
+        self.plot_ax[1].cla()
+        self.plot_ax[2].cla()
+
+        self.plot1_canvas.draw()
+
+        #self.robot_env_ax.cla()
+        #self.robot_env_ax.draw()
 
     def populate_ports(self):
         ports = [port.device for port in serial.tools.list_ports.comports()]
@@ -144,8 +187,12 @@ class MobileRobotGUIApp:
             self.serial_read_thread = threading.Thread(target=self.read_from_port)
             self.serial_read_thread.start()
 
+            self.clear_plots()
             self.plot_update_thread = threading.Thread(target=self.update_plots)
             self.plot_update_thread.start()
+
+            self.robot_env_plot_update_thread = threading.Thread(target=self.robot_env_plot_update)
+            self.robot_env_plot_update_thread.start()
         except Exception as e:
             self.log_text.insert(tk.END, f"Error: {str(e)}\n")
 
@@ -167,7 +214,7 @@ class MobileRobotGUIApp:
         while self.connection_active:  # Check the flag in the reading loop
             if self.ser.in_waiting > 36:
                 try:
-                    line = struct.unpack('<3i2b4B18x',self.ser.read(36))
+                    line = struct.unpack('<3i2b3x1B18x',self.ser.read(36))
                     print(f"Received: {line}")
                     if line:
                         self.log_text.insert(tk.END, f"{datetime.datetime.now()} ")
@@ -176,7 +223,7 @@ class MobileRobotGUIApp:
                         self.log_text.see(tk.END)
 
                         # Update robot's position and wheel speed
-                        self.robot.update_position(line[0], line[1], line[2])
+                        self.robot.update_position(line[0] / 1000.0, line[1] / 1000.0, np.arctan2(np.sin(line[2] / 1000.0), np.cos(line[2] / 1000.0)))
                         self.robot.update_wheelspeed(line[3], line[4])
                         self.update_timeseries_data()
                         #print(f"Robot Position is: X - {self.robot.x_position} Y - {self.robot.y_position} T - {self.robot.theta}")
@@ -236,6 +283,7 @@ class MobileRobot:
         self.theta = np.pi/2
         self.omega_r = 0
         self.omega_l = 0
+        self.width = 0.3
 
     def update_position(self, x, y, t):
         self.x_position = x
@@ -246,7 +294,7 @@ class MobileRobot:
         self.omega_l = w_l
         self.omega_r = w_r
 
-    def draw_robot(self):
+    def draw_robot(self, plotAxes, plotCanvas):
         pass
 
 if __name__ == "__main__":

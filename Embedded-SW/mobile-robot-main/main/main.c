@@ -16,6 +16,10 @@
 // Define parameters
 #define debug_statements 1
 
+// Macros
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
 // Setup any Queues here!
 // Odometry Queues
 static QueueHandle_t x_position_queue;
@@ -165,13 +169,13 @@ void vMotor_PID_Control()
     // Sets up PID controller parameters
     pid_ctrl_parameter_t pid_parameters = {
         .kp = 10.0,
-        .ki = 0.0,
+        .ki = 0.1,
         .kd = 0.3,
-        .cal_type = PID_CAL_TYPE_POSITIONAL,
+        .cal_type = PID_CAL_TYPE_INCREMENTAL,
         .max_output = BDC_MCPWM_DUTY_TICK_MAX - 1,
         .min_output = -(BDC_MCPWM_DUTY_TICK_MAX - 1),
-        .max_integral = 1000,
-        .min_integral = -1000,
+        .max_integral = 5000,
+        .min_integral = -5000,
     };
 
     pid_ctrl_config_t pid_config = {
@@ -222,11 +226,11 @@ void vMotor_PID_Control()
         float left_error = cmd.w_left_cmd - left_motor_pulse_cnt;
         left_speed = 0;
         pid_compute(left_pid_ctrl, left_error, &left_speed);
-        left_speed += compute_feedforward(cmd.w_left_cmd);
-        if (abs(left_speed) > (BDC_MCPWM_DUTY_TICK_MAX - 1))
-        {
-            left_speed = BDC_MCPWM_DUTY_TICK_MAX - 1;
-        }
+        // left_speed += compute_feedforward(cmd.w_left_cmd);
+
+        left_speed = MIN(left_speed, BDC_MCPWM_DUTY_TICK_MAX-2);
+        left_speed = MAX(left_speed, -(BDC_MCPWM_DUTY_TICK_MAX - 2));
+
         if (left_speed > 0)
         {
             bdc_motor_forward(left_motor);
@@ -241,11 +245,10 @@ void vMotor_PID_Control()
         float right_error = cmd.w_right_cmd - right_motor_pulse_cnt;
         right_speed = 0;
         pid_compute(right_pid_ctrl, right_error, &right_speed);
-        right_speed += compute_feedforward(cmd.w_right_cmd);
-        if (abs(right_speed) > (BDC_MCPWM_DUTY_TICK_MAX - 1))
-        {
-            right_speed = BDC_MCPWM_DUTY_TICK_MAX - 1;
-        }
+        // right_speed += compute_feedforward(cmd.w_right_cmd);
+
+        right_speed = MIN(right_speed, BDC_MCPWM_DUTY_TICK_MAX-1);
+        right_speed = MAX(right_speed, -(BDC_MCPWM_DUTY_TICK_MAX - 1));
 
         if (right_speed > 0)
         {
@@ -411,7 +414,7 @@ void app_main(void)
     ultrasonic_center_queue = xQueueCreate(5, sizeof(u_int8_t));
     ultrasonic_right_queue = xQueueCreate(5, sizeof(u_int8_t));
 
-    robot_cmd_queue = xQueueCreate(300, sizeof(mobile_robot_command_t));
+    robot_cmd_queue = xQueueCreate(10, sizeof(mobile_robot_command_t));
 
     // Initialize Encoder PCNTs
     encoder_setup();
@@ -428,7 +431,7 @@ void app_main(void)
     // Parameters: | Task callback function | Task Name | Memory Assigned to Task | Parameters to pass into the task | Priority | Task Handle
     xTaskCreatePinnedToCore(vLed_blink_task, "Status LED", 4096, NULL, 1, NULL, 0);
     //xTaskCreate(vMeasure_Encoders, "Encoder Measurement", 4096, NULL, 10, NULL); 
-    xTaskCreatePinnedToCore(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 2, NULL, 0);
+    //xTaskCreatePinnedToCore(vMeasure_Ultrasonic, "Ultrasonic Sensor Measurement", configMINIMAL_STACK_SIZE * 3, NULL, 2, NULL, 0);
     xTaskCreatePinnedToCore(vMotor_PID_Control, "Motor CL Controller", 8192, NULL, 10, &PID_compute_task_handle, 0);
     xTaskCreatePinnedToCore(vESP_NOW, "ESP NOW Wireless Coms", 8192, NULL, 3, NULL, 1);
     //xTaskCreate(vMotor_Ramp, "Open Loop Motor Test", 4096, NULL, 2, NULL);
